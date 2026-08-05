@@ -50,20 +50,7 @@ function AudioPlayer({ duration, t }) {
 }
 
 export default function ChatView({ t, isDark }) {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      type: 'user',
-      content: 'What is a CPU? Explain simply for O/Level.'
-    },
-    {
-      id: 2,
-      type: 'ai',
-      content: `Here is a simple explanation of a CPU for O/Level studies:\n\n**CPU (Central Processing Unit)** එකක් කියන්නේ පරිගණකයේ "මොළය" (Brain of the computer) වගේ දෙයක්. පරිගණකයට දෙන හැම උපදෙසක්ම තේරුම් අරගෙන, ඒ අනුව ක්‍රියාත්මක කරන්නේ මේ CPU එකයි.\n\nIt consists of three main parts:\n\n**ALU (Arithmetic Logic Unit)**: ගණිතමය (Arithmetic) සහ තාර්කික (Logical) වැඩ සියල්ලම කරන්නේ මෙතනින්. (උදා: එකතු කිරීම, අඩු කිරීම, සංසන්දනය කිරීම).\n**CU (Control Unit)**: පරිගණකයේ අනිත් හැම කොටසක්ම පාලනය කරන්නේ (Control) මෙයා. Memory එකෙන් උපදෙස් අරගෙන ඒවා ALU එකට යවනවා.\n**Registers**: මේවා CPU එක ඇතුළේ තියෙන ගොඩක් වේගවත්, හැබැයි පොඩි මතක (Memory) කොටස්. දැනට කරමින් ඉන්න වැඩ වලට අදාළ දත්ත තාවකාලිකව තියාගන්නේ මෙතන.\n\nIn short, the CPU processes data and controls all the operations of the computer system.`,
-      hasAudio: true,
-      audioDuration: '0:45'
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputVal, setInputVal] = useState('');
   const messagesEndRef = useRef(null);
 
