@@ -11,6 +11,8 @@ import {
 import voiceLKIcon from '../assets/voicelk-icon.png';
 import HomeView from './HomeView';
 import ProfileView from './ProfileView';
+import ChatView from './ChatView';
+import HistoryView from './HistoryView';
 
 const LIGHT = {
   pageBg: '#f0f4fa',
@@ -125,16 +127,11 @@ function IconBtn({ onClick, title, children, t, style = {} }) {
 }
 
 function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
-  const isProfileActive = id === 'profile' && isActive;
-  // Mint green / light teal for profile active state
+  // Mint green / light teal active state for ALL nav items
   const isDark = t.pageBg === '#060f1e';
-  const activeBg = isProfileActive 
-    ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#a7f3d0') // emerald-200
-    : t.navBgActive;
-  const activeText = isProfileActive
-    ? (isDark ? '#34d399' : '#064e3b') // emerald-900
-    : t.navTextActive;
-  const activeIcon = isProfileActive ? activeText : t.navIconActive;
+  const activeBg = isDark ? 'rgba(16, 185, 129, 0.15)' : '#ccfbf1'; // teal-100
+  const activeText = isDark ? '#34d399' : '#0f766e';                  // teal-700
+  const activeIcon = activeText;
 
   if (!full) {
     return (
@@ -188,7 +185,7 @@ function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
   );
 }
 
-function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick }) {
+function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat }) {
   return (
     <div style={{
       width: 52, minWidth: 52,
@@ -219,22 +216,22 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick }) {
           style={{ width: 26, height: 26, objectFit: 'contain' }} />
       </button>
 
-      {}
+      {/* New Chat Button */}
       <button
-        onClick={() => {}}
+        onClick={() => { if (onNewChat) onNewChat(); else setActiveNav('new_chat'); }}
         title="New Chat"
         style={{
           width: 36, height: 36,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           borderRadius: '50%',           
           border: 'none',
-          background: t.newChatBg,
-          color: t.newChatText,
+          background: activeNav === 'new_chat' ? '#dbeafe' : t.newChatBg,
+          color: activeNav === 'new_chat' ? '#1d4ed8' : t.newChatText,
           cursor: 'pointer',
           transition: 'background 0.16s',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = t.newChatBgHover)}
-        onMouseLeave={(e) => (e.currentTarget.style.background = t.newChatBg)}
+        onMouseEnter={(e) => { if (activeNav !== 'new_chat') e.currentTarget.style.background = t.newChatBgHover; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = activeNav === 'new_chat' ? '#dbeafe' : t.newChatBg; }}
       >
         <Plus size={16} strokeWidth={2.5} />
       </button>
@@ -266,7 +263,7 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick }) {
   );
 }
 
-function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClick }) {
+function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClick, onNewChat }) {
   const handleNav = (id) => {
     setActiveNav(id);
     if (onNavClick) onNavClick();
@@ -316,23 +313,23 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
         </button>
       </div>
 
-      {}
+      {/* New Chat Button */}
       <button
-        onClick={() => { {} if (onNavClick) onNavClick(); }}
+        onClick={() => { if (onNewChat) onNewChat(); else setActiveNav('new_chat'); if (onNavClick) onNavClick(); }}
         style={{
           width: '100%',
           display: 'flex', alignItems: 'center', gap: 7,
           padding: '7px 14px',
           borderRadius: 9999,            
           border: 'none',
-          background: t.newChatBg,
-          color: t.newChatText,
+          background: activeNav === 'new_chat' ? '#e2e8f0' : t.newChatBg,
+          color: activeNav === 'new_chat' ? '#1d4ed8' : t.newChatText,
           cursor: 'pointer',
           fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
           marginBottom: 6, transition: 'background 0.16s',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = t.newChatBgHover)}
-        onMouseLeave={(e) => (e.currentTarget.style.background = t.newChatBg)}
+        onMouseEnter={(e) => { if (activeNav !== 'new_chat') e.currentTarget.style.background = t.newChatBgHover; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = activeNav === 'new_chat' ? '#e2e8f0' : t.newChatBg; }}
       >
         <Plus size={15} strokeWidth={2.5} />
         New Chat
@@ -380,7 +377,18 @@ export default function MainLayout() {
   const [expanded, setExpanded] = useState(true);
   
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [activeNav, setActiveNav] = useState('profile');
+  const [activeNav, setActiveNav] = useState('new_chat');
+  const [chatInitialMessage, setChatInitialMessage] = useState('');
+
+  const handleHomeSubmit = (message) => {
+    setChatInitialMessage(message);
+    setActiveNav('chat');
+  };
+
+  const handleNewChat = () => {
+    setChatInitialMessage('');
+    setActiveNav('new_chat');
+  };
 
   const t = isDark ? DARK : LIGHT;
 
@@ -417,6 +425,7 @@ export default function MainLayout() {
             <ExpandedSidebarContent
               t={t} activeNav={activeNav} setActiveNav={setActiveNav}
               onClose={() => setExpanded(false)}
+              onNewChat={handleNewChat}
             />
           </div>
         )}
@@ -426,6 +435,7 @@ export default function MainLayout() {
           <CollapsedSidebar
             t={t} activeNav={activeNav} setActiveNav={setActiveNav}
             onLogoClick={() => setDrawerOpen(true)}
+            onNewChat={handleNewChat}
           />
         )}
 
@@ -466,8 +476,12 @@ export default function MainLayout() {
           {/* Dynamic Content Area */}
           {activeNav === 'profile' ? (
             <ProfileView isDark={isDark} />
+          ) : activeNav === 'history' ? (
+            <HistoryView />
+          ) : activeNav === 'chat' ? (
+            <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} />
           ) : (
-            <HomeView t={t} isDark={isDark} />
+            <HomeView t={t} isDark={isDark} onSubmit={handleHomeSubmit} />
           )}
         </div>
 
@@ -498,10 +512,9 @@ export default function MainLayout() {
             }}>
               <ExpandedSidebarContent
                 t={t} activeNav={activeNav} setActiveNav={setActiveNav}
-                
                 onClose={() => { setExpanded(true); setDrawerOpen(false); }}
-                
-                onNavClick={() => setDrawerOpen(false)}
+                onNavClick={() => { setExpanded(true); setDrawerOpen(false); }}
+                onNewChat={handleNewChat}
               />
             </div>
           </>
