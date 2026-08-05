@@ -3,8 +3,8 @@ import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut } from 'lucide-rea
 
 export default function ProfileView({ isDark }) {
   const [user, setUser] = useState({
-    fullName: 'Thinuka',
-    email: 'thinuka.ai@example.com',
+    fullName: '',
+    email: '',
     avatar: ''
   });
   
