@@ -2,9 +2,6 @@ import { useState, useEffect } from 'react';
 import voiceLKIcon from '../assets/voicelk-icon.png';
 import { Mail, Lock, User, Eye, EyeOff, Mic2 } from 'lucide-react';
 
-/* ─────────────────────────────────────────
-   Google SVG icon
-───────────────────────────────────────── */
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.332 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#FFC107"/>
@@ -14,11 +11,6 @@ const GoogleIcon = () => (
   </svg>
 );
 
-
-
-/* ─────────────────────────────────────────
-   Theme tokens
-───────────────────────────────────────── */
 const LIGHT = {
   pageBg: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 40%, #ede9fe 70%, #fce7f3 100%)',
   card: '#ffffff',
@@ -98,10 +90,6 @@ const DARK = {
   eyeIconHover: '#00d4ff',
 };
 
-/* ─────────────────────────────────────────
-   Input Field — pill shape, static label
-   (matches reference image: icon + placeholder inside pill)
-───────────────────────────────────────── */
 const InputField = ({ id, label, type: initialType = 'text', icon: Icon, t }) => {
   const [focused, setFocused] = useState(false);
   const [value, setValue] = useState('');
@@ -112,7 +100,7 @@ const InputField = ({ id, label, type: initialType = 'text', icon: Icon, t }) =>
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Left icon */}
+      {}
       <div
         style={{
           position: 'absolute',
@@ -140,7 +128,7 @@ const InputField = ({ id, label, type: initialType = 'text', icon: Icon, t }) =>
         style={{
           width: '100%',
           padding: '11px 36px 11px 38px',
-          borderRadius: 9999,           /* pill shape */
+          borderRadius: 9999,           
           border: `1px solid ${focused ? t.inputFocusBorder : t.inputBorder}`,
           background: t.inputBg,
           color: t.inputText,
@@ -153,7 +141,7 @@ const InputField = ({ id, label, type: initialType = 'text', icon: Icon, t }) =>
         }}
       />
 
-      {/* Show/hide password */}
+      {}
       {isPassword && (
         <button
           type="button"
@@ -180,7 +168,7 @@ const InputField = ({ id, label, type: initialType = 'text', icon: Icon, t }) =>
         </button>
       )}
 
-      {/* placeholder color — injected once */}
+      {}
       <style>{`
         #${id}::placeholder { color: ${t.inputPlaceholder}; }
       `}</style>
@@ -188,15 +176,11 @@ const InputField = ({ id, label, type: initialType = 'text', icon: Icon, t }) =>
   );
 };
 
-/* ─────────────────────────────────────────
-   Main Auth Page
-───────────────────────────────────────── */
-export default function AuthPage() {
+export default function AuthPage({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
   const [fading, setFading] = useState(false);
 
-  /* ── Detect system dark/light preference ── */
   const [isDark, setIsDark] = useState(
     () => window.matchMedia('(prefers-color-scheme: dark)').matches
   );
@@ -217,12 +201,12 @@ export default function AuthPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(`[VoiceLK] ${isLogin ? 'Sign In' : 'Registration'} submitted`);
+    {}
+    if (onLogin) onLogin();
   };
 
-  const handleGoogle = () => console.log('[VoiceLK] Google OAuth initiated');
+  const handleGoogle = () => {}
 
-  /* ── Page background ── */
   const pageStyle = isDark
     ? { background: t.pageBg, position: 'relative' }
     : { background: t.pageBg };
@@ -239,7 +223,7 @@ export default function AuthPage() {
         }
       `}</style>
 
-      {/* ── Page wrapper ── */}
+      {}
       <div
         style={{
           minHeight: '100vh',
@@ -253,7 +237,7 @@ export default function AuthPage() {
           ...pageStyle,
         }}
       >
-        {/* Dark-mode animated blobs */}
+        {}
         {isDark && (
           <>
             <div style={{
@@ -275,7 +259,7 @@ export default function AuthPage() {
           </>
         )}
 
-        {/* ── Card wrapper ── */}
+        {}
         <div
           style={{
             position: 'relative',
@@ -287,7 +271,7 @@ export default function AuthPage() {
             transition: 'opacity 250ms ease, transform 250ms ease',
           }}
         >
-          {/* Glow outline (dark only) */}
+          {}
           {isDark && (
             <div style={{
               position: 'absolute', inset: -1, borderRadius: 28,
@@ -296,7 +280,7 @@ export default function AuthPage() {
             }} />
           )}
 
-          {/* ── Card ── */}
+          {}
           <div
             style={{
               borderRadius: 24,
@@ -308,7 +292,7 @@ export default function AuthPage() {
               WebkitBackdropFilter: isDark ? 'blur(24px)' : 'none',
             }}
           >
-            {/* Dark-mode top accent line */}
+            {}
             {isDark && (
               <div style={{
                 height: 2,
@@ -318,9 +302,9 @@ export default function AuthPage() {
 
             <div style={{ padding: '36px 32px 32px' }}>
 
-              {/* ── Logo ── */}
+              {}
               <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                {/* Icon row — user icon + brand name */}
+                {}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -335,7 +319,7 @@ export default function AuthPage() {
                       width: 34,
                       height: 34,
                       objectFit: 'contain',
-                      /* On dark bg the white PNG bg becomes invisible via multiply */
+                      
                       mixBlendMode: isDark ? 'screen' : 'normal',
                       filter: isDark ? 'brightness(1.15)' : 'none',
                     }}
@@ -361,7 +345,7 @@ export default function AuthPage() {
                 </p>
               </div>
 
-              {/* ── Google Button — pill shape ── */}
+              {}
               <button
                 type="button"
                 id="google-login-btn"
@@ -373,7 +357,7 @@ export default function AuthPage() {
                   justifyContent: 'center',
                   gap: 10,
                   padding: '10px 0',
-                  borderRadius: 9999,          /* pill */
+                  borderRadius: 9999,          
                   fontSize: 13,
                   fontWeight: 500,
                   color: t.googleText,
@@ -400,7 +384,7 @@ export default function AuthPage() {
                 Continue with Google
               </button>
 
-              {/* ── Divider ── */}
+              {}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
                 <div style={{ flex: 1, height: 1, background: t.dividerLine }} />
                 <span style={{ fontSize: 11, color: t.dividerText, fontWeight: 400, whiteSpace: 'nowrap' }}>
@@ -409,7 +393,7 @@ export default function AuthPage() {
                 <div style={{ flex: 1, height: 1, background: t.dividerLine }} />
               </div>
 
-              {/* ── Form ── */}
+              {}
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
                 {!isLogin && (
@@ -442,7 +426,7 @@ export default function AuthPage() {
                   />
                 )}
 
-                {/* ── Remember me / Forgot password (Login only) ── */}
+                {}
                 {isLogin && (
                   <div style={{
                     display: 'flex',
@@ -450,7 +434,7 @@ export default function AuthPage() {
                     justifyContent: 'space-between',
                     marginTop: 2,
                   }}>
-                    {/* Remember me — circle checkbox (matches reference) */}
+                    {}
                     <label
                       htmlFor="remember-me"
                       style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer' }}
@@ -463,12 +447,12 @@ export default function AuthPage() {
                           onChange={() => setRememberMe((p) => !p)}
                           style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
                         />
-                        {/* Circle checkbox UI */}
+                        {}
                         <div
                           style={{
                             width: 16,
                             height: 16,
-                            borderRadius: '50%',          /* circle, matches reference */
+                            borderRadius: '50%',          
                             border: `1.5px solid ${rememberMe ? t.checkBorderChecked : t.checkBorder}`,
                             background: rememberMe ? t.checkBgChecked : t.checkBg,
                             display: 'flex',
@@ -492,11 +476,11 @@ export default function AuthPage() {
                       </span>
                     </label>
 
-                    {/* Forgot password */}
+                    {}
                     <button
                       type="button"
                       id="forgot-password-btn"
-                      onClick={() => console.log('[VoiceLK] Forgot password')}
+                      onClick={() => {}}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -516,14 +500,14 @@ export default function AuthPage() {
                   </div>
                 )}
 
-                {/* ── Primary CTA — pill shape ── */}
+                {}
                 <button
                   type="submit"
                   id={isLogin ? 'sign-in-btn' : 'create-account-btn'}
                   style={{
                     width: '100%',
                     padding: '11px 0',
-                    borderRadius: 9999,          /* pill */
+                    borderRadius: 9999,          
                     fontSize: 13,
                     fontWeight: 600,
                     color: t.ctaText,
@@ -564,7 +548,7 @@ export default function AuthPage() {
                 </button>
               </form>
 
-              {/* ── Toggle view ── */}
+              {}
               <p style={{ textAlign: 'center', fontSize: 12.5, color: t.toggleText, marginTop: 20 }}>
                 {isLogin ? (
                   <>
