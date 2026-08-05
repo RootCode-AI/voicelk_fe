@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   History,
   UserCircle2,
   Settings,
   HelpCircle,
-  Paperclip,
-  SendHorizonal,
   PanelLeftClose,
   Plus,
   Bell,
 } from 'lucide-react';
 import voiceLKIcon from '../assets/voicelk-icon.png';
+import HomeView from './HomeView';
+import ProfileView from './ProfileView';
 
 const LIGHT = {
   pageBg: '#f0f4fa',
@@ -125,7 +125,17 @@ function IconBtn({ onClick, title, children, t, style = {} }) {
 }
 
 function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
-  
+  const isProfileActive = id === 'profile' && isActive;
+  // Mint green / light teal for profile active state
+  const isDark = t.pageBg === '#060f1e';
+  const activeBg = isProfileActive 
+    ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#a7f3d0') // emerald-200
+    : t.navBgActive;
+  const activeText = isProfileActive
+    ? (isDark ? '#34d399' : '#064e3b') // emerald-900
+    : t.navTextActive;
+  const activeIcon = isProfileActive ? activeText : t.navIconActive;
+
   if (!full) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
@@ -137,16 +147,16 @@ function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             borderRadius: '50%',           
             border: 'none',
-            background: isActive ? t.navBgActive : 'transparent',
+            background: isActive ? activeBg : 'transparent',
             cursor: 'pointer',
             transition: 'background 0.16s',
             flexShrink: 0,
           }}
           onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = t.navBgHover; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? t.navBgActive : 'transparent'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? activeBg : 'transparent'; }}
         >
           <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8}
-            style={{ color: isActive ? t.navIconActive : t.navIconColor }} />
+            style={{ color: isActive ? activeIcon : t.navIconColor }} />
         </button>
       </div>
     );
@@ -160,19 +170,19 @@ function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
         padding: '7px 14px',
         borderRadius: 9999,              
         border: 'none',
-        background: isActive ? t.navBgActive : 'transparent',
+        background: isActive ? activeBg : 'transparent',
         cursor: 'pointer',
-        color: isActive ? t.navTextActive : t.navText,
+        color: isActive ? activeText : t.navText,
         fontFamily: 'inherit', fontSize: 13.5,
         fontWeight: isActive ? 600 : 400,
         transition: 'background 0.16s, color 0.16s',
         whiteSpace: 'nowrap', overflow: 'hidden', textAlign: 'left',
       }}
       onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = t.navBgHover; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? t.navBgActive : 'transparent'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? activeBg : 'transparent'; }}
     >
       <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8}
-        style={{ color: isActive ? t.navIconActive : t.navIconColor, flexShrink: 0 }} />
+        style={{ color: isActive ? activeIcon : t.navIconColor, flexShrink: 0 }} />
       <span>{label}</span>
     </button>
   );
@@ -370,18 +380,9 @@ export default function MainLayout() {
   const [expanded, setExpanded] = useState(true);
   
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [activeNav, setActiveNav] = useState('history');
-  const [inputVal, setInputVal] = useState('');
-  const inputRef = useRef(null);
+  const [activeNav, setActiveNav] = useState('profile');
 
   const t = isDark ? DARK : LIGHT;
-
-  const handleSend = (e) => {
-    e.preventDefault();
-    if (!inputVal.trim()) return;
-    {}
-    setInputVal('');
-  };
 
   return (
     <>
@@ -462,104 +463,12 @@ export default function MainLayout() {
             </div>
           </div>
 
-          {}
-          <div style={{
-            flex: 1,
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            padding: '0 32px',
-            textAlign: 'center',
-            gap: 12,
-          }}>
-            <h1 style={{
-              fontSize: 'clamp(18px, 2.6vw, 28px)',
-              fontWeight: 700,
-              color: t.headingColor,
-              margin: 0,
-              letterSpacing: '-0.4px',
-              lineHeight: 1.25,
-            }}>
-              Hello, what can I help you with today?
-            </h1>
-
-            <p style={{
-              fontSize: 'clamp(12.5px, 1.4vw, 14.5px)',
-              color: t.subColor,
-              margin: 0,
-              fontWeight: 400,
-            }}>
-              VoiceLK සමඟ අද මොනවද ඉගෙන ගන්නේ?
-            </p>
-
-            {}
-            <form
-              onSubmit={handleSend}
-              style={{
-                width: '100%',
-                maxWidth: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: t.cardBg,
-                border: `1px solid ${t.inputBorder}`,
-                borderRadius: 9999,
-                padding: '7px 8px 7px 14px',
-                boxShadow: t.inputShadow,
-                marginTop: 4,
-                backdropFilter: isDark ? 'blur(12px)' : 'none',
-              }}
-            >
-              {}
-              <button
-                type="button"
-                onClick={() => {}}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: t.inputIcon, lineHeight: 0, padding: 0, flexShrink: 0,
-                  transition: 'color 0.15s',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = t.inputIconHover)}
-                onMouseLeave={(e) => (e.currentTarget.style.color = t.inputIcon)}
-                aria-label="Attach"
-              >
-                <Paperclip size={16} strokeWidth={1.8} />
-              </button>
-
-              {}
-              <input
-                ref={inputRef}
-                id="voicelk-input"
-                type="text"
-                value={inputVal}
-                onChange={(e) => setInputVal(e.target.value)}
-                placeholder="Type a topic or paste text to generate Sinhala audio..."
-                style={{
-                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                  fontSize: 13, color: t.inputText, fontFamily: 'inherit',
-                  caretColor: isDark ? '#00d4ff' : '#1d4ed8',
-                }}
-              />
-
-              {}
-              <button
-                type="submit"
-                id="send-btn"
-                style={{
-                  width: 30, height: 30, borderRadius: '50%', border: 'none',
-                  background: inputVal.trim() ? t.sendBg : t.sendBgDisabled,
-                  color: inputVal.trim() ? t.sendIcon : t.sendIconDisabled,
-                  cursor: inputVal.trim() ? 'pointer' : 'default',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, transition: 'background 0.2s, transform 0.15s',
-                }}
-                onMouseEnter={(e) => { if (inputVal.trim()) e.currentTarget.style.transform = 'scale(1.1)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                aria-label="Send"
-              >
-                <SendHorizonal size={14} strokeWidth={2.2} />
-              </button>
-            </form>
-          </div>
+          {/* Dynamic Content Area */}
+          {activeNav === 'profile' ? (
+            <ProfileView isDark={isDark} />
+          ) : (
+            <HomeView t={t} isDark={isDark} />
+          )}
         </div>
 
         {}
