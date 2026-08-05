@@ -104,8 +104,8 @@ export default function ChatView({ t, isDark, initialMessage = '' }) {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       
       {/* Scrollable Messages Area */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px 100px 32px', display: 'flex', flexDirection: 'column', gap: 32 }}>
-        <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 90px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
           {messages.map(msg => (
             <div key={msg.id} style={{
               display: 'flex', 
@@ -116,19 +116,19 @@ export default function ChatView({ t, isDark, initialMessage = '' }) {
                 <div style={{
                   width: 32, height: 32, borderRadius: '50%', background: '#3b82f6',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, marginRight: 16, marginTop: 4
+                  flexShrink: 0, marginRight: 12, marginTop: 4
                 }}>
-                  <Bot size={20} color="#ffffff" />
+                  <Bot size={18} color="#ffffff" />
                 </div>
               )}
               
               <div style={{
-                maxWidth: '85%',
+                maxWidth: '90%',
                 background: msg.type === 'user' ? (isDark ? '#1e293b' : '#f3f4f6') : 'transparent',
                 color: msg.type === 'user' ? (isDark ? '#f8fafc' : '#111827') : (isDark ? '#f1f5f9' : '#1f2937'),
-                padding: msg.type === 'user' ? '12px 20px' : '0',
-                borderRadius: msg.type === 'user' ? 24 : 0,
-                fontSize: 15,
+                padding: msg.type === 'user' ? '10px 16px' : '0',
+                borderRadius: msg.type === 'user' ? 20 : 0,
+                fontSize: 14.5,
                 lineHeight: 1.6,
                 fontWeight: msg.type === 'user' ? 500 : 400
               }}>
@@ -147,7 +147,7 @@ export default function ChatView({ t, isDark, initialMessage = '' }) {
       {/* Pinned Bottom Input Bar */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '24px 32px',
+        padding: '12px 16px',
         background: `linear-gradient(to bottom, transparent, ${t.pageBg} 20%)`,
         display: 'flex', justifyContent: 'center'
       }}>

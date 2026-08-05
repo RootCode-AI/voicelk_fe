@@ -7,12 +7,14 @@ import {
   PanelLeftClose,
   Plus,
   Bell,
+  Menu,
 } from 'lucide-react';
 import voiceLKIcon from '../assets/voicelk-icon.png';
 import HomeView from './HomeView';
 import ProfileView from './ProfileView';
 import ChatView from './ChatView';
 import HistoryView from './HistoryView';
+import HelpView from './HelpView';
 
 const LIGHT = {
   pageBg: '#f0f4fa',
@@ -374,8 +376,18 @@ export default function MainLayout() {
     return () => mq.removeEventListener('change', h);
   }, []);
 
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(() => window.innerWidth > 768);
   
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setExpanded(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeNav, setActiveNav] = useState('new_chat');
   const [chatInitialMessage, setChatInitialMessage] = useState('');
@@ -403,6 +415,9 @@ export default function MainLayout() {
           from { opacity: 0; } to { opacity: 1; }
         }
         #voicelk-input::placeholder { color: ${t.inputPlaceholder}; }
+        @media (max-width: 768px) {
+          .desktop-sidebar { display: none !important; }
+        }
       `}</style>
 
       <div style={{
@@ -412,9 +427,9 @@ export default function MainLayout() {
         background: t.pageBg,
       }}>
 
-        {}
+        {/* Sidebar Desktop Expanded */}
         {expanded && (
-          <div style={{
+          <div className="desktop-sidebar" style={{
             width: 220, minWidth: 220,
             height: '100vh',
             background: t.sidebarBg,
@@ -430,7 +445,7 @@ export default function MainLayout() {
           </div>
         )}
 
-        {}
+        {/* Sidebar Collapsed */}
         {!expanded && (
           <CollapsedSidebar
             t={t} activeNav={activeNav} setActiveNav={setActiveNav}
@@ -439,20 +454,29 @@ export default function MainLayout() {
           />
         )}
 
-        {}
+        {/* Main Content Area */}
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           height: '100vh', overflow: 'hidden',
           background: t.pageBg, position: 'relative',
         }}>
 
-          {}
+          {/* Top Bar */}
           <div style={{
             display: 'flex', alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
             padding: '8px 16px',
             flexShrink: 0,
           }}>
+            {/* Mobile / Collapsed Menu Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {!expanded && (
+                <IconBtn title="Open menu" t={t} onClick={() => setDrawerOpen(true)}>
+                  <Menu size={20} strokeWidth={2} />
+                </IconBtn>
+              )}
+            </div>
+
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <IconBtn title="Notifications" t={t}>
                 <Bell size={18} strokeWidth={1.8} />
@@ -460,7 +484,7 @@ export default function MainLayout() {
               <IconBtn title="Settings" t={t}>
                 <Settings size={18} strokeWidth={1.8} />
               </IconBtn>
-              {}
+              
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
                 background: t.avatarBg,
@@ -475,9 +499,11 @@ export default function MainLayout() {
 
           {/* Dynamic Content Area */}
           {activeNav === 'profile' ? (
-            <ProfileView isDark={isDark} />
+            <ProfileView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} />
           ) : activeNav === 'history' ? (
-            <HistoryView />
+            <HistoryView isDark={isDark} />
+          ) : activeNav === 'help' ? (
+            <HelpView isDark={isDark} />
           ) : activeNav === 'chat' ? (
             <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} />
           ) : (

@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut } from 'lucide-react';
 
-export default function ProfileView({ isDark }) {
+export default function ProfileView({ isDark, onToggleDark }) {
   const [user, setUser] = useState({
     fullName: '',
     email: '',
     avatar: ''
   });
   
-  const [isDarkMode, setIsDarkMode] = useState(isDark || false);
   const [language, setLanguage] = useState('English');
 
   const theme = {
@@ -147,10 +146,10 @@ export default function ProfileView({ isDark }) {
               <div style={{ fontSize: 12.5, color: theme.subText }}>Switch to a darker visual theme</div>
             </div>
             <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              onClick={() => { if (onToggleDark) onToggleDark(); }}
               style={{
                 width: 48, height: 26, borderRadius: 9999,
-                background: isDarkMode ? '#10b981' : (isDark ? '#374151' : '#e5e7eb'),
+                background: isDark ? '#10b981' : '#e5e7eb',
                 border: 'none', position: 'relative', cursor: 'pointer',
                 transition: 'background 0.3s ease'
               }}
@@ -158,7 +157,7 @@ export default function ProfileView({ isDark }) {
             >
               <div style={{
                 width: 20, height: 20, borderRadius: '50%', background: '#ffffff',
-                position: 'absolute', top: 3, left: isDarkMode ? 25 : 3,
+                position: 'absolute', top: 3, left: isDark ? 25 : 3,
                 transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
               }} />
