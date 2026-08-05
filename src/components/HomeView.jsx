@@ -1,13 +1,14 @@
 import { useState, useRef } from 'react';
 import { Paperclip, SendHorizonal } from 'lucide-react';
 
-export default function HomeView({ t, isDark }) {
+export default function HomeView({ t, isDark, onSubmit }) {
   const [inputVal, setInputVal] = useState('');
   const inputRef = useRef(null);
 
   const handleSend = (e) => {
     e.preventDefault();
     if (!inputVal.trim()) return;
+    if (onSubmit) onSubmit(inputVal.trim());
     setInputVal('');
   };
 

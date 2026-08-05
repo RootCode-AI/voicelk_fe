@@ -49,10 +49,11 @@ function AudioPlayer({ duration, t }) {
   );
 }
 
-export default function ChatView({ t, isDark }) {
+export default function ChatView({ t, isDark, initialMessage = '' }) {
   const [messages, setMessages] = useState([]);
   const [inputVal, setInputVal] = useState('');
   const messagesEndRef = useRef(null);
+  const initialSentRef = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,6 +62,23 @@ export default function ChatView({ t, isDark }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Auto-send the initial message from HomeView on first mount
+  useEffect(() => {
+    if (initialMessage && !initialSentRef.current) {
+      initialSentRef.current = true;
+      const userMsg = { id: Date.now(), type: 'user', content: initialMessage };
+      setMessages([userMsg]);
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          type: 'ai',
+          content: `ඔබ ලබාදුන් "${initialMessage}" යන මාතෘකාවට අදාල පිළිතුර මෙන්න...`,
+          hasAudio: false
+        }]);
+      }, 1000);
+    }
+  }, [initialMessage]);
 
   const handleSend = (e) => {
     e.preventDefault();
