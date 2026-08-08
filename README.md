@@ -100,18 +100,7 @@ VITE_API_BASE_URL=http://localhost:8000
 
 > Variables must be prefixed with `VITE_` to be exposed to the browser. If unset, requests default to relative paths.
 
----
 
-## Branching
-
-| Branch | Purpose |
-|---|---|
-| `main` | Production-ready code |
-| `feature/*` | New features |
-| `fix/*` | Bug fixes |
-| `{Name}/dev-v{X.Y}` | Developer version branches |
-
----
 
 ## Contributing
 
