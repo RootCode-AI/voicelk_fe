@@ -28,13 +28,11 @@ export default function HistoryView({ isDark }) {
     <div style={{ flex: 1, overflowY: 'auto', background: theme.bg, height: '100%', fontFamily: "'Inter', system-ui, sans-serif" }}>
       <div style={{ maxWidth: 780, width: '100%', margin: '0 auto', padding: '36px 24px 48px 24px', display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
 
-        {/* Page Heading */}
         <h1 style={{ fontSize: 36, fontWeight: 800, color: theme.heading, margin: '0 0 24px 0', letterSpacing: '-0.5px' }}>
           History
         </h1>
 
         {historyGroups.length === 0 ? (
-          /* ── Empty State — centered ── */
           <div style={{
             flex: 1,
             display: 'flex', flexDirection: 'column',
@@ -46,22 +44,17 @@ export default function HistoryView({ isDark }) {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Grouped List */}
             {historyGroups.map((group, gi) => (
               <div key={gi}>
-                {/* Date Label */}
                 <p style={{ fontSize: 13, fontWeight: 700, color: theme.dateLabel, margin: '24px 0 8px 0' }}>
                   {group.dateLabel}
                 </p>
 
-                {/* Items */}
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   {group.items.map((item, ii) => (
                     <div key={item.id ?? ii}>
-                      {/* Row */}
                       <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16, padding: '18px 0' }}>
 
-                        {/* Play Button */}
                         <button style={{
                           minWidth: 40, height: 40, borderRadius: '50%',
                           background: theme.playBg, border: 'none', cursor: 'pointer',
@@ -74,7 +67,6 @@ export default function HistoryView({ isDark }) {
                           <Play size={14} strokeWidth={0} fill={theme.playIcon} style={{ marginLeft: 2 }} />
                         </button>
 
-                        {/* Text + Metadata */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           <p style={{ fontSize: 15, color: theme.itemText, fontWeight: 500, lineHeight: 1.6, margin: 0 }}>
                             {item.content}
@@ -94,7 +86,6 @@ export default function HistoryView({ isDark }) {
                         </div>
                       </div>
 
-                      {/* Divider between items */}
                       {ii < group.items.length - 1 && (
                         <div style={{ height: 1, background: theme.divider, width: '100%' }} />
                       )}
@@ -106,7 +97,6 @@ export default function HistoryView({ isDark }) {
           </div>
         )}
 
-        {/* "Load earlier interactions" — always visible */}
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32, marginBottom: 16 }}>
           <button
             style={{

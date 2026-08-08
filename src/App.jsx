@@ -4,12 +4,10 @@ import MainLayout from './components/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ErrorProvider, useError } from './context/ErrorContext';
 
-// ── Inner app — has access to ErrorContext ─────────────────────
 function AppInner() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { showError } = useError();
 
-  // Catch unhandled JS runtime errors (e.g. undefined is not a function)
   useEffect(() => {
     const handleError = (event) => {
       console.error('[Global] Uncaught error:', event.error || event.message);
@@ -20,15 +18,14 @@ function AppInner() {
       );
     };
 
-    // Catch unhandled Promise rejections (e.g. failed awaits without try/catch)
     const handleUnhandledRejection = (event) => {
       console.error('[Global] Unhandled promise rejection:', event.reason);
       const msg =
-        event.reason?.userMessage ||   // ApiError from our api.js
+        event.reason?.userMessage ||
         event.reason?.message ||
         'A background operation failed. Please try again.';
       showError(msg, 'error', { title: 'Operation Failed' });
-      event.preventDefault(); // Suppress default console noise
+      event.preventDefault();
     };
 
     window.addEventListener('error', handleError);
@@ -44,7 +41,6 @@ function AppInner() {
     : <AuthPage onLogin={() => setIsAuthenticated(true)} />;
 }
 
-// ── Root ───────────────────────────────────────────────────────
 function App() {
   return (
     <ErrorProvider>

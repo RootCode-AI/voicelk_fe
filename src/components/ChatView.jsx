@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Play, Download, MoreVertical, PlusCircle, Send, Bot } from 'lucide-react';
 
-// A simple helper to parse markdown-like bold (**) and newlines
 function renderRichText(text) {
   const html = text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -26,11 +25,9 @@ function AudioPlayer({ duration, t }) {
       </button>
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {/* Progress track */}
         <div style={{ height: 4, background: '#e5e7eb', borderRadius: 2, position: 'relative' }}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', background: '#3b82f6', borderRadius: 2 }} />
         </div>
-        {/* Timestamps */}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6b7280', fontWeight: 500 }}>
           <span>0:14</span>
           <span>{duration}</span>
@@ -63,7 +60,6 @@ export default function ChatView({ t, isDark, initialMessage = '' }) {
     scrollToBottom();
   }, [messages]);
 
-  // Auto-send the initial message from HomeView on first mount
   useEffect(() => {
     if (initialMessage && !initialSentRef.current) {
       initialSentRef.current = true;
@@ -84,12 +80,10 @@ export default function ChatView({ t, isDark, initialMessage = '' }) {
     e.preventDefault();
     if (!inputVal.trim()) return;
     
-    // Add user message
     const newUserMsg = { id: Date.now(), type: 'user', content: inputVal };
     setMessages(prev => [...prev, newUserMsg]);
     setInputVal('');
 
-    // Simulate AI response after a short delay
     setTimeout(() => {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
@@ -103,7 +97,6 @@ export default function ChatView({ t, isDark, initialMessage = '' }) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       
-      {/* Scrollable Messages Area */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 90px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
           {messages.map(msg => (
@@ -144,7 +137,6 @@ export default function ChatView({ t, isDark, initialMessage = '' }) {
         </div>
       </div>
 
-      {/* Pinned Bottom Input Bar */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
         padding: '12px 16px',

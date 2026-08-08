@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useCallback, useRef } from 'react'
 
 const ErrorContext = createContext(null);
 
-// Maps error types to display config
 export const ERROR_TYPES = {
   error:   { label: 'Error',   color: '#ef4444', bg: '#fef2f2', border: '#fecaca', icon: '✕' },
   warning: { label: 'Warning', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', icon: '!' },
@@ -10,7 +9,6 @@ export const ERROR_TYPES = {
   success: { label: 'Success', color: '#10b981', bg: '#f0fdf4', border: '#a7f3d0', icon: '✓' },
 };
 
-// Maps HTTP status codes → user-friendly messages
 export function getHttpErrorMessage(status, defaultMessage) {
   const map = {
     400: 'The request was invalid. Please check your input and try again.',
@@ -73,7 +71,6 @@ export function ErrorProvider({ children }) {
   );
 }
 
-// ── Toast Container ────────────────────────────────────────────
 function ToastContainer({ toasts, onDismiss }) {
   if (toasts.length === 0) return null;
   return (
@@ -89,7 +86,6 @@ function ToastContainer({ toasts, onDismiss }) {
   );
 }
 
-// ── Individual Toast ───────────────────────────────────────────
 function Toast({ toast, onDismiss }) {
   const cfg = ERROR_TYPES[toast.type] || ERROR_TYPES.error;
 
@@ -108,7 +104,6 @@ function Toast({ toast, onDismiss }) {
         : 'toastIn 0.35s cubic-bezier(0.22,0.61,0.36,1) forwards',
       fontFamily: "'Inter', system-ui, sans-serif",
     }}>
-      {/* Icon badge */}
       <div style={{
         width: 24, height: 24, borderRadius: '50%',
         background: cfg.color, color: '#fff',
@@ -118,7 +113,6 @@ function Toast({ toast, onDismiss }) {
         {cfg.icon}
       </div>
 
-      {/* Text */}
       <div style={{ flex: 1, minWidth: 0 }}>
         {toast.title && (
           <p style={{ margin: '0 0 2px 0', fontSize: 13, fontWeight: 700, color: cfg.color }}>
@@ -130,7 +124,6 @@ function Toast({ toast, onDismiss }) {
         </p>
       </div>
 
-      {/* Dismiss button */}
       <button
         onClick={() => onDismiss(toast.id)}
         style={{
@@ -146,7 +139,6 @@ function Toast({ toast, onDismiss }) {
         ×
       </button>
 
-      {/* Keyframe styles */}
       <style>{`
         @keyframes toastIn {
           from { opacity: 0; transform: translateX(110%) scale(0.95); }
@@ -161,7 +153,6 @@ function Toast({ toast, onDismiss }) {
   );
 }
 
-// ── Hook ───────────────────────────────────────────────────────
 export function useError() {
   const ctx = useContext(ErrorContext);
   if (!ctx) throw new Error('useError must be used inside <ErrorProvider>');

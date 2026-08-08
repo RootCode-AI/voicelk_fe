@@ -1,19 +1,5 @@
 import { Component } from 'react';
 
-/**
- * ErrorBoundary — catches unhandled React render/lifecycle errors.
- * Wrap around any component tree section you want to protect.
- *
- * Usage:
- *   <ErrorBoundary>
- *     <MyComponent />
- *   </ErrorBoundary>
- *
- * Or with a custom fallback:
- *   <ErrorBoundary fallback={<p>Oops!</p>}>
- *     <MyComponent />
- *   </ErrorBoundary>
- */
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -25,7 +11,6 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    // Log full details to console for developers
     console.error('[ErrorBoundary] Caught render error:', error, info);
   }
 
@@ -36,10 +21,8 @@ export default class ErrorBoundary extends Component {
   render() {
     if (!this.state.hasError) return this.props.children;
 
-    // Use custom fallback if provided
     if (this.props.fallback) return this.props.fallback;
 
-    // Default fallback UI
     return (
       <div style={{
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -51,7 +34,6 @@ export default class ErrorBoundary extends Component {
           borderRadius: 16, padding: '40px 32px',
           boxShadow: '0 4px 24px rgba(239,68,68,0.08)',
         }}>
-          {/* Icon */}
           <div style={{
             width: 56, height: 56, borderRadius: '50%',
             background: '#fee2e2', margin: '0 auto 20px',
@@ -69,7 +51,6 @@ export default class ErrorBoundary extends Component {
             You can try reloading this section.
           </p>
 
-          {/* Error detail (dev-friendly, collapsed) */}
           {this.state.error && (
             <details style={{ textAlign: 'left', marginBottom: 20 }}>
               <summary style={{ fontSize: 12, color: '#9ca3af', cursor: 'pointer', marginBottom: 8 }}>

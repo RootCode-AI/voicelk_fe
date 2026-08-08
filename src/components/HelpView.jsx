@@ -4,7 +4,6 @@ import {
   ChevronDown, ChevronUp, SendHorizonal
 } from 'lucide-react';
 
-// ── FAQ Accordion Item ─────────────────────────────────────────
 function FaqItem({ question, answer, theme }) {
   const [open, setOpen] = useState(false);
 
@@ -23,7 +22,6 @@ function FaqItem({ question, answer, theme }) {
       onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)'}
       onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
     >
-      {/* Question row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: theme.faqQuestion }}>
           {question}
@@ -34,7 +32,6 @@ function FaqItem({ question, answer, theme }) {
         }
       </div>
 
-      {/* Answer */}
       {open && (
         <p style={{
           margin: '12px 0 0 0', fontSize: 14, color: theme.faqAnswer, lineHeight: 1.65,
@@ -46,7 +43,6 @@ function FaqItem({ question, answer, theme }) {
   );
 }
 
-// ── Help Category Card ─────────────────────────────────────────
 function CategoryCard({ icon: Icon, iconBg, iconColor, title, description, theme }) {
   return (
     <div style={{
@@ -81,7 +77,6 @@ function CategoryCard({ icon: Icon, iconBg, iconColor, title, description, theme
   );
 }
 
-// ── Help View ──────────────────────────────────────────────────
 const FAQS = [
   {
     question: 'How do I generate Sinhala audio?',
@@ -139,13 +134,11 @@ export default function HelpView({ isDark }) {
     }}>
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px 60px' }}>
 
-        {/* ── Hero ── */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <h1 style={{ fontSize: 34, fontWeight: 800, color: theme.heading, margin: '0 0 24px 0', letterSpacing: '-0.5px' }}>
             How can we help you?
           </h1>
 
-          {/* Search Bar */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
             background: theme.inputBg,
@@ -169,7 +162,6 @@ export default function HelpView({ isDark }) {
           </div>
         </div>
 
-        {/* ── Category Cards Grid ── */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
@@ -181,7 +173,6 @@ export default function HelpView({ isDark }) {
           ))}
         </div>
 
-        {/* ── Popular FAQs ── */}
         <section style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: theme.heading, margin: '0 0 16px 0', letterSpacing: '-0.3px' }}>
             Popular FAQs
@@ -193,7 +184,6 @@ export default function HelpView({ isDark }) {
           </div>
         </section>
 
-        {/* ── Contact Support Card ── */}
         <div style={{
           background: theme.supportCardBg,
           border: `1px solid ${theme.supportCardBorder}`,
@@ -208,7 +198,6 @@ export default function HelpView({ isDark }) {
             Can't find the answer you're looking for? Our support team and community are here to help you succeed.
           </p>
 
-          {/* Message input row */}
           <div style={{
             display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10,
             maxWidth: 480, margin: '0 auto', justifyContent: 'center',
