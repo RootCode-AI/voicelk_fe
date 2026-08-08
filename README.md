@@ -1,16 +1,133 @@
-# React + Vite
+<div align="center">
+  <h1>VoiceLK Frontend</h1>
+  <p>AI-powered Sinhala text-to-speech learning platform for O/Level ICT students</p>
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/TailwindCSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" />
+</div>
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Overview
 
-## React Compiler
+VoiceLK allows students to type or paste ICT-related topics and receive AI-generated Sinhala audio responses. The application features:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Authentication** — Sign in / Sign up with email or Google
+- **Home / Chat** — Submit topics and receive AI responses with Sinhala TTS audio
+- **History** — Browse past interactions grouped by date
+- **Profile** — Manage account settings and toggle dark mode
+- **Help** — FAQ accordion, category cards, and a contact support form
+- **Global error handling** — Toast notifications for API and runtime errors
 
-## Expanding the Oxlint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Tech Stack
+
+| | Technology |
+|---|---|
+| Framework | React 19 |
+| Build Tool | Vite 8 |
+| Styling | CSS-in-JS + Tailwind CSS 4 |
+| Icons | Lucide React |
+| Linting | Oxlint |
+
+---
+
+## Project Structure
+
+```
+voicelk_fe/
+├── public/
+├── src/
+│   ├── assets/               # Static images
+│   ├── components/
+│   │   ├── AuthPage.jsx      # Login & registration
+│   │   ├── ChatView.jsx      # Chat interface
+│   │   ├── ErrorBoundary.jsx # React error boundary
+│   │   ├── HelpView.jsx      # Help centre
+│   │   ├── HistoryView.jsx   # Interaction history
+│   │   ├── HomeView.jsx      # Home prompt input
+│   │   ├── MainLayout.jsx    # App shell & navigation
+│   │   └── ProfileView.jsx   # User profile & settings
+│   ├── context/
+│   │   └── ErrorContext.jsx  # Global toast notifications
+│   ├── utils/
+│   │   └── api.js            # API fetch wrapper
+│   ├── App.jsx
+│   └── main.jsx
+├── index.html
+├── package.json
+└── vite.config.js
+```
+
+---
+
+## Getting Started
+
+**Prerequisites:** Node.js >= 18, npm >= 9
+
+```bash
+git clone https://github.com/RootCode-AI/voicelk_fe.git
+cd voicelk_fe
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+---
+
+## Scripts
+
+```bash
+npm run dev       # Start dev server with HMR
+npm run build     # Build for production
+npm run preview   # Preview production build
+npm run lint      # Run Oxlint
+```
+
+---
+
+## Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+> Variables must be prefixed with `VITE_` to be exposed to the browser. If unset, requests default to relative paths.
+
+---
+
+## Branching
+
+| Branch | Purpose |
+|---|---|
+| `main` | Production-ready code |
+| `feature/*` | New features |
+| `fix/*` | Bug fixes |
+| `{Name}/dev-v{X.Y}` | Developer version branches |
+
+---
+
+## Contributing
+
+```bash
+# 1. Create your branch
+git checkout -b YourName/dev-v1.0
+
+# 2. Commit your changes
+git commit -m "feat: description of your change"
+
+# 3. Push and open a PR
+git push origin YourName/dev-v1.0
+```
+
+---
+
+<div align="center">
+  <sub>Built by <strong>RootCode AI</strong> &nbsp;|&nbsp; <a href="https://github.com/RootCode-AI/voicelk_fe">GitHub</a></sub>
+</div>
