@@ -17,16 +17,16 @@ export default function HomeView({ t, isDark, onSubmit }) {
       flex: 1,
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      padding: '0 32px',
+      padding: '0 16px',
       textAlign: 'center',
-      gap: 12,
+      gap: 14,
     }}>
       <h1 style={{
-        fontSize: 'clamp(18px, 2.6vw, 28px)',
-        fontWeight: 700,
+        fontSize: 'clamp(20px, 4.5vw, 32px)',
+        fontWeight: 800,
         color: t.headingColor,
         margin: 0,
-        letterSpacing: '-0.4px',
+        letterSpacing: '-0.5px',
         lineHeight: 1.25,
       }}>
         Hello, what can I help you with today?

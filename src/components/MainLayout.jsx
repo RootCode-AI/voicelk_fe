@@ -13,6 +13,7 @@ import HomeView from './HomeView';
 import ProfileView from './ProfileView';
 import ChatView from './ChatView';
 import HistoryView from './HistoryView';
+import HelpView from './HelpView';
 
 const LIGHT = {
   pageBg: '#f0f4fa',
@@ -127,10 +128,9 @@ function IconBtn({ onClick, title, children, t, style = {} }) {
 }
 
 function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
-  // Mint green / light teal active state for ALL nav items
   const isDark = t.pageBg === '#060f1e';
-  const activeBg = isDark ? 'rgba(16, 185, 129, 0.15)' : '#ccfbf1'; // teal-100
-  const activeText = isDark ? '#34d399' : '#0f766e';                  // teal-700
+  const activeBg = isDark ? 'rgba(16, 185, 129, 0.15)' : '#ccfbf1';
+  const activeText = isDark ? '#34d399' : '#0f766e';
   const activeIcon = activeText;
 
   if (!full) {
@@ -142,7 +142,7 @@ function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
           style={{
             width: 36, height: 36,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: '50%',           
+            borderRadius: '50%',
             border: 'none',
             background: isActive ? activeBg : 'transparent',
             cursor: 'pointer',
@@ -165,7 +165,7 @@ function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
         width: '100%',
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '7px 14px',
-        borderRadius: 9999,              
+        borderRadius: 9999,
         border: 'none',
         background: isActive ? activeBg : 'transparent',
         cursor: 'pointer',
@@ -200,7 +200,6 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat }
       flexShrink: 0,
       zIndex: 20,
     }}>
-      {}
       <button
         onClick={onLogoClick}
         title="Open sidebar"
@@ -216,14 +215,13 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat }
           style={{ width: 26, height: 26, objectFit: 'contain' }} />
       </button>
 
-      {/* New Chat Button */}
       <button
         onClick={() => { if (onNewChat) onNewChat(); else setActiveNav('new_chat'); }}
         title="New Chat"
         style={{
           width: 36, height: 36,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: '50%',           
+          borderRadius: '50%',
           border: 'none',
           background: activeNav === 'new_chat' ? '#dbeafe' : t.newChatBg,
           color: activeNav === 'new_chat' ? '#1d4ed8' : t.newChatText,
@@ -236,7 +234,6 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat }
         <Plus size={16} strokeWidth={2.5} />
       </button>
 
-      {}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', padding: '0 6px', marginTop: 2 }}>
         {NAV_TOP.map(({ id, label, Icon }) => (
           <NavItem key={id} id={id} label={label} Icon={Icon}
@@ -245,13 +242,10 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat }
         ))}
       </div>
 
-      {}
       <div style={{ flex: 1 }} />
 
-      {}
       <div style={{ width: 28, height: 1, background: t.divider, margin: '4px 0' }} />
 
-      {}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', padding: '0 6px' }}>
         {NAV_BOTTOM.map(({ id, label, Icon }) => (
           <NavItem key={id} id={id} label={label} Icon={Icon}
@@ -274,7 +268,6 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
       display: 'flex', flexDirection: 'column',
       height: '100%', padding: '12px 10px',
     }}>
-      {}
       <div style={{
         display: 'flex', alignItems: 'center',
         justifyContent: 'space-between',
@@ -291,7 +284,6 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
           </span>
         </div>
 
-        {}
         <button
           onClick={onClose}
           title="Close sidebar"
@@ -313,14 +305,13 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
         </button>
       </div>
 
-      {/* New Chat Button */}
       <button
         onClick={() => { if (onNewChat) onNewChat(); else setActiveNav('new_chat'); if (onNavClick) onNavClick(); }}
         style={{
           width: '100%',
           display: 'flex', alignItems: 'center', gap: 7,
           padding: '7px 14px',
-          borderRadius: 9999,            
+          borderRadius: 9999,
           border: 'none',
           background: activeNav === 'new_chat' ? '#e2e8f0' : t.newChatBg,
           color: activeNav === 'new_chat' ? '#1d4ed8' : t.newChatText,
@@ -335,7 +326,6 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
         New Chat
       </button>
 
-      {}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {NAV_TOP.map(({ id, label, Icon }) => (
           <NavItem key={id} id={id} label={label} Icon={Icon}
@@ -344,13 +334,10 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
         ))}
       </div>
 
-      {}
       <div style={{ flex: 1 }} />
 
-      {}
       <div style={{ height: 1, background: t.divider, margin: '6px 0' }} />
 
-      {}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {NAV_BOTTOM.map(({ id, label, Icon }) => (
           <NavItem key={id} id={id} label={label} Icon={Icon}
@@ -363,7 +350,6 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
 }
 
 export default function MainLayout() {
-  
   const [isDark, setIsDark] = useState(
     () => window.matchMedia('(prefers-color-scheme: dark)').matches
   );
@@ -374,8 +360,18 @@ export default function MainLayout() {
     return () => mq.removeEventListener('change', h);
   }, []);
 
-  const [expanded, setExpanded] = useState(true);
-  
+  const [expanded, setExpanded] = useState(() => window.innerWidth > 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setExpanded(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeNav, setActiveNav] = useState('new_chat');
   const [chatInitialMessage, setChatInitialMessage] = useState('');
@@ -403,6 +399,9 @@ export default function MainLayout() {
           from { opacity: 0; } to { opacity: 1; }
         }
         #voicelk-input::placeholder { color: ${t.inputPlaceholder}; }
+        @media (max-width: 768px) {
+          .desktop-sidebar { display: none !important; }
+        }
       `}</style>
 
       <div style={{
@@ -412,9 +411,8 @@ export default function MainLayout() {
         background: t.pageBg,
       }}>
 
-        {}
         {expanded && (
-          <div style={{
+          <div className="desktop-sidebar" style={{
             width: 220, minWidth: 220,
             height: '100vh',
             background: t.sidebarBg,
@@ -430,7 +428,6 @@ export default function MainLayout() {
           </div>
         )}
 
-        {}
         {!expanded && (
           <CollapsedSidebar
             t={t} activeNav={activeNav} setActiveNav={setActiveNav}
@@ -439,20 +436,19 @@ export default function MainLayout() {
           />
         )}
 
-        {}
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           height: '100vh', overflow: 'hidden',
           background: t.pageBg, position: 'relative',
         }}>
-
-          {}
           <div style={{
             display: 'flex', alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
             padding: '8px 16px',
             flexShrink: 0,
           }}>
+            <div />
+
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <IconBtn title="Notifications" t={t}>
                 <Bell size={18} strokeWidth={1.8} />
@@ -460,7 +456,7 @@ export default function MainLayout() {
               <IconBtn title="Settings" t={t}>
                 <Settings size={18} strokeWidth={1.8} />
               </IconBtn>
-              {}
+
               <div style={{
                 width: 32, height: 32, borderRadius: '50%',
                 background: t.avatarBg,
@@ -473,11 +469,12 @@ export default function MainLayout() {
             </div>
           </div>
 
-          {/* Dynamic Content Area */}
           {activeNav === 'profile' ? (
-            <ProfileView isDark={isDark} />
+            <ProfileView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} />
           ) : activeNav === 'history' ? (
-            <HistoryView />
+            <HistoryView isDark={isDark} />
+          ) : activeNav === 'help' ? (
+            <HelpView isDark={isDark} />
           ) : activeNav === 'chat' ? (
             <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} />
           ) : (
@@ -485,10 +482,8 @@ export default function MainLayout() {
           )}
         </div>
 
-        {}
         {drawerOpen && (
           <>
-            {}
             <div
               onClick={() => setDrawerOpen(false)}
               style={{
@@ -498,7 +493,6 @@ export default function MainLayout() {
                 animation: 'fadeIn 0.18s ease',
               }}
             />
-            {}
             <div style={{
               position: 'fixed',
               top: 0, left: 0, bottom: 0,
@@ -512,8 +506,8 @@ export default function MainLayout() {
             }}>
               <ExpandedSidebarContent
                 t={t} activeNav={activeNav} setActiveNav={setActiveNav}
-                onClose={() => { setExpanded(true); setDrawerOpen(false); }}
-                onNavClick={() => { setExpanded(true); setDrawerOpen(false); }}
+                onClose={() => { setDrawerOpen(false); }}
+                onNavClick={() => { setDrawerOpen(false); }}
                 onNewChat={handleNewChat}
               />
             </div>
