@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import voiceLKIcon from '../assets/voicelk-icon.png';
 import { Mail, Lock, User, Eye, EyeOff, Mic2, Loader2 } from 'lucide-react';
 import { api, friendlyMessage } from '../utils/api';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../utils/firebase';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -189,6 +191,7 @@ export default function AuthPage({ onLogin }) {
 
   // UI state
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -287,7 +290,41 @@ export default function AuthPage({ onLogin }) {
     }
   };
 
-  const handleGoogle = () => {}
+  const handleGoogle = async () => {
+    setError('');
+    setSuccess('');
+    setGoogleLoading(true);
+
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+
+      const data = await api.post('/auth/firebase', { idToken });
+
+      localStorage.setItem('voicelk_token', data.token);
+      localStorage.setItem('voicelk_user', JSON.stringify({
+        userId: data.userId,
+        email: data.email,
+        role: data.role,
+      }));
+
+      if (onLogin) onLogin({
+        token: data.token,
+        userId: data.userId,
+        email: data.email,
+        role: data.role,
+      });
+
+    } catch (err) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        // User closed the popup, don't show an error
+        return;
+      }
+      setError(friendlyMessage(err));
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const pageStyle = isDark
     ? { background: t.pageBg, position: 'relative' }
@@ -423,42 +460,43 @@ export default function AuthPage({ onLogin }) {
               </div>
 
               {}
-              <button
-                type="button"
-                id="google-login-btn"
+              <button 
+                type="button" 
                 onClick={handleGoogle}
+                disabled={googleLoading}
                 style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 10,
-                  padding: '10px 0',
-                  borderRadius: 9999,          
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: t.googleText,
-                  background: t.googleBg,
-                  border: `1px solid ${t.googleBorder}`,
-                  cursor: 'pointer',
-                  marginBottom: 20,
-                  transition: 'all 0.2s ease',
-                  fontFamily: 'inherit',
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  padding: '12px 24px', borderRadius: 9999,
+                  background: t.googleBg, border: `1px solid ${t.googleBorder}`,
+                  color: t.googleText, fontSize: 14.5, fontWeight: 600,
+                  cursor: googleLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                  transition: 'background 0.15s, transform 0.15s',
+                  opacity: googleLoading ? 0.7 : 1,
                   boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = t.googleHoverBg;
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                onMouseEnter={(e) => { 
+                  if (!googleLoading) {
+                    e.currentTarget.style.background = t.googleHoverBg; 
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                  }
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = t.googleBg;
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)';
+                onMouseLeave={(e) => { 
+                  if (!googleLoading) {
+                    e.currentTarget.style.background = t.googleBg; 
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)';
+                  }
                 }}
               >
-                <GoogleIcon />
-                Continue with Google
+                {googleLoading ? (
+                  <Loader2 size={18} strokeWidth={2.2} style={{ animation: 'spin 0.8s linear infinite' }} />
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    Continue with Google
+                  </>
+                )}
               </button>
 
               {}
