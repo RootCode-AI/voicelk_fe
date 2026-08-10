@@ -7,6 +7,8 @@ import {
   PanelLeftClose,
   Plus,
   Bell,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 import voiceLKIcon from '../assets/voicelk-icon.png';
 import HomeView from './HomeView';
@@ -185,7 +187,7 @@ function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
   );
 }
 
-function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat }) {
+function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat, isAuthenticated }) {
   return (
     <div style={{
       width: 52, minWidth: 52,
@@ -235,7 +237,7 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat }
       </button>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', padding: '0 6px', marginTop: 2 }}>
-        {NAV_TOP.map(({ id, label, Icon }) => (
+        {NAV_TOP.filter(item => isAuthenticated || item.id !== 'profile').map(({ id, label, Icon }) => (
           <NavItem key={id} id={id} label={label} Icon={Icon}
             isActive={activeNav === id} full={false} t={t}
             onClick={() => setActiveNav(id)} />
@@ -257,7 +259,7 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat }
   );
 }
 
-function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClick, onNewChat }) {
+function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClick, onNewChat, isAuthenticated }) {
   const handleNav = (id) => {
     setActiveNav(id);
     if (onNavClick) onNavClick();
@@ -327,7 +329,7 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
       </button>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {NAV_TOP.map(({ id, label, Icon }) => (
+        {NAV_TOP.filter(item => isAuthenticated || item.id !== 'profile').map(({ id, label, Icon }) => (
           <NavItem key={id} id={id} label={label} Icon={Icon}
             isActive={activeNav === id} full={true} t={t}
             onClick={() => handleNav(id)} />
@@ -349,7 +351,7 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
   );
 }
 
-export default function MainLayout() {
+export default function MainLayout({ isAuthenticated = true, userData, onLoginClick, onLogout }) {
   const [isDark, setIsDark] = useState(
     () => window.matchMedia('(prefers-color-scheme: dark)').matches
   );
@@ -375,6 +377,13 @@ export default function MainLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeNav, setActiveNav] = useState('new_chat');
   const [chatInitialMessage, setChatInitialMessage] = useState('');
+
+  // Redirect away from profile if logged out
+  useEffect(() => {
+    if (!isAuthenticated && activeNav === 'profile') {
+      setActiveNav('new_chat');
+    }
+  }, [isAuthenticated, activeNav]);
 
   const handleHomeSubmit = (message) => {
     setChatInitialMessage(message);
@@ -424,6 +433,7 @@ export default function MainLayout() {
               t={t} activeNav={activeNav} setActiveNav={setActiveNav}
               onClose={() => setExpanded(false)}
               onNewChat={handleNewChat}
+              isAuthenticated={isAuthenticated}
             />
           </div>
         )}
@@ -433,6 +443,7 @@ export default function MainLayout() {
             t={t} activeNav={activeNav} setActiveNav={setActiveNav}
             onLogoClick={() => setDrawerOpen(true)}
             onNewChat={handleNewChat}
+            isAuthenticated={isAuthenticated}
           />
         )}
 
@@ -450,27 +461,69 @@ export default function MainLayout() {
             <div />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconBtn title="Notifications" t={t}>
-                <Bell size={18} strokeWidth={1.8} />
-              </IconBtn>
-              <IconBtn title="Settings" t={t}>
-                <Settings size={18} strokeWidth={1.8} />
-              </IconBtn>
+              {isAuthenticated ? (
+                <>
+                  <IconBtn title="Notifications" t={t}>
+                    <Bell size={18} strokeWidth={1.8} />
+                  </IconBtn>
+                  <IconBtn title="Settings" t={t}>
+                    <Settings size={18} strokeWidth={1.8} />
+                  </IconBtn>
 
-              <div style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: t.avatarBg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, fontWeight: 700, color: t.avatarText,
-                cursor: 'pointer', marginLeft: 6, userSelect: 'none',
-              }}>
-                V
-              </div>
+                  <div
+                    title={userData?.email || 'User'}
+                    style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: t.avatarBg,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 700, color: t.avatarText,
+                    cursor: 'pointer', marginLeft: 6, userSelect: 'none',
+                  }}>
+                    {(userData?.email?.[0] || 'U').toUpperCase()}
+                  </div>
+                </>
+              ) : (
+                <button
+                  onClick={onLoginClick}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    padding: '7px 18px 7px 14px',
+                    borderRadius: 9999,
+                    border: 'none',
+                    background: isDark
+                      ? 'linear-gradient(135deg, #0891b2, #00d4ff)'
+                      : 'linear-gradient(135deg, #2563eb, #3b82f6)',
+                    color: '#ffffff',
+                    fontSize: 13.5, fontWeight: 600,
+                    fontFamily: 'inherit',
+                    cursor: 'pointer',
+                    transition: 'transform 0.15s, box-shadow 0.15s, opacity 0.15s',
+                    boxShadow: isDark
+                      ? '0 2px 12px rgba(0,212,255,0.3)'
+                      : '0 2px 12px rgba(37,99,235,0.3)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.04)';
+                    e.currentTarget.style.boxShadow = isDark
+                      ? '0 4px 20px rgba(0,212,255,0.45)'
+                      : '0 4px 20px rgba(37,99,235,0.45)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = isDark
+                      ? '0 2px 12px rgba(0,212,255,0.3)'
+                      : '0 2px 12px rgba(37,99,235,0.3)';
+                  }}
+                >
+                  <LogIn size={15} strokeWidth={2.2} />
+                  Login
+                </button>
+              )}
             </div>
           </div>
 
           {activeNav === 'profile' ? (
-            <ProfileView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} />
+            <ProfileView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} onLogout={onLogout} userData={userData} />
           ) : activeNav === 'history' ? (
             <HistoryView isDark={isDark} />
           ) : activeNav === 'help' ? (
@@ -509,6 +562,7 @@ export default function MainLayout() {
                 onClose={() => { setDrawerOpen(false); }}
                 onNavClick={() => { setDrawerOpen(false); }}
                 onNewChat={handleNewChat}
+                isAuthenticated={isAuthenticated}
               />
             </div>
           </>

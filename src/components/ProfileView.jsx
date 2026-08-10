@@ -1,12 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '../utils/api';
 import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut } from 'lucide-react';
 
-export default function ProfileView({ isDark, onToggleDark }) {
+export default function ProfileView({ isDark, onToggleDark, onLogout, userData }) {
   const [user, setUser] = useState({
-    fullName: '',
-    email: '',
+    fullName: userData?.email?.split('@')[0] || '',
+    email: userData?.email || '',
     avatar: ''
   });
+  
+  useEffect(() => {
+    if (userData && userData.userId) {
+      api.get(`/api/reg/${userData.userId}`)
+        .then(data => {
+          if (data) {
+            setUser({
+              fullName: data.userName || data.email?.split('@')[0] || '',
+              email: data.email || '',
+              avatar: data.profilePicture || ''
+            });
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch user profile", err);
+        });
+    } else {
+      setUser({
+        fullName: '',
+        email: '',
+        avatar: ''
+      });
+    }
+  }, [userData]);
   
   const [language, setLanguage] = useState('English');
 
@@ -188,7 +213,9 @@ export default function ProfileView({ isDark, onToggleDark }) {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-          <button style={{
+          <button 
+          onClick={onLogout}
+          style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '12px 28px', borderRadius: 9999,
             background: isDark ? 'rgba(239,68,68,0.15)' : '#fee2e2',

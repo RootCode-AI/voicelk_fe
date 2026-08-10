@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import voiceLKIcon from '../assets/voicelk-icon.png';
-import { Mail, Lock, User, Eye, EyeOff, Mic2 } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Mic2, Loader2 } from 'lucide-react';
+import { api, friendlyMessage } from '../utils/api';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -90,9 +91,8 @@ const DARK = {
   eyeIconHover: '#00d4ff',
 };
 
-const InputField = ({ id, label, type: initialType = 'text', icon: Icon, t }) => {
+const InputField = ({ id, label, type: initialType = 'text', icon: Icon, t, value, onChange }) => {
   const [focused, setFocused] = useState(false);
-  const [value, setValue] = useState('');
   const [showPass, setShowPass] = useState(false);
 
   const isPassword = initialType === 'password';
@@ -122,7 +122,7 @@ const InputField = ({ id, label, type: initialType = 'text', icon: Icon, t }) =>
         value={value}
         placeholder={label}
         autoComplete="off"
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         style={{
@@ -181,6 +181,17 @@ export default function AuthPage({ onLogin }) {
   const [rememberMe, setRememberMe] = useState(false);
   const [fading, setFading] = useState(false);
 
+  // Form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [userName, setUserName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // UI state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
   const [isDark, setIsDark] = useState(
     () => window.matchMedia('(prefers-color-scheme: dark)').matches
   );
@@ -195,14 +206,85 @@ export default function AuthPage({ onLogin }) {
 
   const toggleView = () => {
     if (fading) return;
+    setError('');
+    setSuccess('');
     setFading(true);
-    setTimeout(() => { setIsLogin((p) => !p); setFading(false); }, 250);
+    setTimeout(() => {
+      setIsLogin((p) => !p);
+      setEmail('');
+      setPassword('');
+      setUserName('');
+      setConfirmPassword('');
+      setFading(false);
+    }, 250);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    {}
-    if (onLogin) onLogin();
+    setError('');
+    setSuccess('');
+
+    // Validation
+    if (!email || !password) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+
+    if (!isLogin) {
+      if (!userName) {
+        setError('Please enter a username.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match.');
+        return;
+      }
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters.');
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        // Login
+        const data = await api.post('/auth/login', { email, password });
+        // Store token and user info
+        localStorage.setItem('voicelk_token', data.token);
+        localStorage.setItem('voicelk_user', JSON.stringify({
+          userId: data.userId,
+          email: data.email,
+          role: data.role,
+        }));
+        if (onLogin) onLogin({
+          token: data.token,
+          userId: data.userId,
+          email: data.email,
+          role: data.role,
+        });
+      } else {
+        // Register
+        await api.post('/auth/register', { userName, email, password });
+        setSuccess('Account created successfully! Please sign in.');
+        // Switch to login view after a short delay
+        setTimeout(() => {
+          setFading(true);
+          setTimeout(() => {
+            setIsLogin(true);
+            setPassword('');
+            setConfirmPassword('');
+            setUserName('');
+            setFading(false);
+          }, 250);
+        }, 1200);
+      }
+    } catch (err) {
+      setError(friendlyMessage(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogle = () => {}
@@ -220,6 +302,10 @@ export default function AuthPage({ onLogin }) {
           0%,100% { transform: scale(1) translate(0,0); }
           33%  { transform: scale(1.06) translate(18px,-14px); }
           66%  { transform: scale(0.96) translate(-10px,18px); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
         }
       `}</style>
 
@@ -334,15 +420,6 @@ export default function AuthPage({ onLogin }) {
                     VoiceLK
                   </span>
                 </div>
-
-                <p style={{
-                  fontSize: 13,
-                  color: t.subtitle,
-                  fontWeight: 400,
-                  letterSpacing: '0.01em',
-                }}>
-                  Sinhala TTS Portal
-                </p>
               </div>
 
               {}
@@ -394,10 +471,41 @@ export default function AuthPage({ onLogin }) {
               </div>
 
               {}
+              {/* Error / Success messages */}
+                {error && (
+                  <div style={{
+                    padding: '9px 14px',
+                    borderRadius: 12,
+                    background: isDark ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.08)',
+                    border: `1px solid ${isDark ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.2)'}`,
+                    color: isDark ? '#fca5a5' : '#dc2626',
+                    fontSize: 12.5,
+                    fontWeight: 500,
+                    marginBottom: 4,
+                  }}>
+                    {error}
+                  </div>
+                )}
+                {success && (
+                  <div style={{
+                    padding: '9px 14px',
+                    borderRadius: 12,
+                    background: isDark ? 'rgba(16,185,129,0.12)' : 'rgba(16,185,129,0.08)',
+                    border: `1px solid ${isDark ? 'rgba(16,185,129,0.3)' : 'rgba(16,185,129,0.2)'}`,
+                    color: isDark ? '#6ee7b7' : '#059669',
+                    fontSize: 12.5,
+                    fontWeight: 500,
+                    marginBottom: 4,
+                  }}>
+                    {success}
+                  </div>
+                )}
+
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
                 {!isLogin && (
-                  <InputField id="reg-username" label="Username" type="text" icon={User} t={t} />
+                  <InputField id="reg-username" label="Username" type="text" icon={User} t={t}
+                    value={userName} onChange={setUserName} />
                 )}
 
                 <InputField
@@ -406,6 +514,8 @@ export default function AuthPage({ onLogin }) {
                   type="email"
                   icon={Mail}
                   t={t}
+                  value={email}
+                  onChange={setEmail}
                 />
 
                 <InputField
@@ -414,6 +524,8 @@ export default function AuthPage({ onLogin }) {
                   type="password"
                   icon={Lock}
                   t={t}
+                  value={password}
+                  onChange={setPassword}
                 />
 
                 {!isLogin && (
@@ -423,6 +535,8 @@ export default function AuthPage({ onLogin }) {
                     type="password"
                     icon={Lock}
                     t={t}
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
                   />
                 )}
 
@@ -544,7 +658,11 @@ export default function AuthPage({ onLogin }) {
                   onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.985)')}
                   onMouseUp={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
                 >
-                  {isLogin ? 'Sign In' : 'Create Account'}
+                  {loading ? (
+                    <Loader2 size={18} strokeWidth={2.2} style={{ animation: 'spin 0.8s linear infinite' }} />
+                  ) : (
+                    isLogin ? 'Sign In' : 'Create Account'
+                  )}
                 </button>
               </form>
 
