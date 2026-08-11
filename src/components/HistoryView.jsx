@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Play, Clock, Loader2, Trash2 } from 'lucide-react';
-import { api } from '../utils/api';
+import { api, friendlyMessage } from '../utils/api';
+import { useError } from '../context/ErrorContext';
 
 function formatRelativeDate(dateStr) {
   const date = new Date(dateStr);
@@ -32,13 +33,12 @@ function groupByDate(items) {
 export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
   const [historyGroups, setHistoryGroups] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { showError } = useError();
 
   useEffect(() => {
     if (!userData?.userId) return;
 
     setLoading(true);
-    setError('');
 
     api.get(`/api/ask/history/${userData.userId}`)
       .then(data => {
@@ -57,7 +57,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
       })
       .catch(err => {
         console.error('[HistoryView] Failed to load history:', err);
-        setError('Failed to load history.');
+        showError(friendlyMessage(err), 'error');
       })
       .finally(() => setLoading(false));
   }, [userData?.userId]);
@@ -78,7 +78,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
       });
     } catch (err) {
       console.error('[HistoryView] Failed to delete history:', err);
-      alert('Failed to delete history item.');
+      showError(friendlyMessage(err), 'error');
     }
   };
 
@@ -103,7 +103,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
     responseBg: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
     responseBorder: isDark ? 'rgba(255,255,255,0.06)' : '#e5e7eb',
     responseText: isDark ? '#94a3b8' : '#6b7280',
-    errorText: isDark ? '#fca5a5' : '#dc2626',
+    itemBg: isDark ? 'rgba(12,24,48,0.9)' : '#ffffff',
     itemHoverBg: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
   };
 
@@ -140,15 +140,6 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
           }}>
             <Loader2 size={32} strokeWidth={2} style={{ animation: 'spin 0.8s linear infinite', opacity: 0.5 }} />
             <p style={{ fontSize: 14, fontWeight: 500, margin: 0 }}>Loading history...</p>
-          </div>
-        ) : error ? (
-          <div style={{
-            flex: 1,
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            minHeight: 400, gap: 12, color: theme.errorText,
-          }}>
-            <p style={{ fontSize: 15, fontWeight: 500, margin: 0 }}>⚠️ {error}</p>
           </div>
         ) : historyGroups.length === 0 ? (
           <div style={{

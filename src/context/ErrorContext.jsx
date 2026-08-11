@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import voiceLKIcon from '../assets/voicelk-icon.png';
 
 const ErrorContext = createContext(null);
 
@@ -75,8 +76,8 @@ function ToastContainer({ toasts, onDismiss }) {
   if (toasts.length === 0) return null;
   return (
     <div style={{
-      position: 'fixed', top: 20, right: 20, zIndex: 9999,
-      display: 'flex', flexDirection: 'column', gap: 10,
+      position: 'fixed', bottom: 20, right: 20, zIndex: 9999,
+      display: 'flex', flexDirection: 'column-reverse', gap: 10,
       maxWidth: 380, width: '100%', pointerEvents: 'none',
     }}>
       {toasts.map(toast => (
@@ -104,14 +105,16 @@ function Toast({ toast, onDismiss }) {
         : 'toastIn 0.35s cubic-bezier(0.22,0.61,0.36,1) forwards',
       fontFamily: "'Inter', system-ui, sans-serif",
     }}>
-      <div style={{
-        width: 24, height: 24, borderRadius: '50%',
-        background: cfg.color, color: '#fff',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 12, fontWeight: 700, flexShrink: 0, marginTop: 1,
-      }}>
-        {cfg.icon}
-      </div>
+      <img
+        src={voiceLKIcon}
+        alt="VoiceLK"
+        style={{
+          width: 26, height: 26,
+          objectFit: 'contain',
+          flexShrink: 0,
+          marginTop: 1,
+        }}
+      />
 
       <div style={{ flex: 1, minWidth: 0 }}>
         {toast.title && (

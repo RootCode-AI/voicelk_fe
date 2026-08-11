@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import voiceLKIcon from '../assets/voicelk-icon.png';
 import { Mail, Lock, User, Eye, EyeOff, Mic2, Loader2 } from 'lucide-react';
 import { api, friendlyMessage } from '../utils/api';
+import { useError } from '../context/ErrorContext';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../utils/firebase';
 
@@ -192,8 +193,7 @@ export default function AuthPage({ onLogin }) {
   // UI state
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const { showError } = useError();
 
   const [isDark, setIsDark] = useState(
     () => window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -209,8 +209,6 @@ export default function AuthPage({ onLogin }) {
 
   const toggleView = () => {
     if (fading) return;
-    setError('');
-    setSuccess('');
     setFading(true);
     setTimeout(() => {
       setIsLogin((p) => !p);
@@ -224,26 +222,24 @@ export default function AuthPage({ onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     // Validation
     if (!email || !password) {
-      setError('Please fill in all required fields.');
+      showError('Please fill in all required fields.', 'warning');
       return;
     }
 
     if (!isLogin) {
       if (!userName) {
-        setError('Please enter a username.');
+        showError('Please enter a username.', 'warning');
         return;
       }
       if (password !== confirmPassword) {
-        setError('Passwords do not match.');
+        showError('Passwords do not match.', 'error');
         return;
       }
       if (password.length < 6) {
-        setError('Password must be at least 6 characters.');
+        showError('Password must be at least 6 characters.', 'warning');
         return;
       }
     }
@@ -270,7 +266,7 @@ export default function AuthPage({ onLogin }) {
       } else {
         // Register
         await api.post('/auth/register', { userName, email, password });
-        setSuccess('Account created successfully! Please sign in.');
+        showError('Account created successfully! Please sign in.', 'success');
         // Switch to login view after a short delay
         setTimeout(() => {
           setFading(true);
@@ -284,15 +280,13 @@ export default function AuthPage({ onLogin }) {
         }, 1200);
       }
     } catch (err) {
-      setError(friendlyMessage(err));
+      showError(friendlyMessage(err), 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogle = async () => {
-    setError('');
-    setSuccess('');
     setGoogleLoading(true);
 
     try {
@@ -320,7 +314,7 @@ export default function AuthPage({ onLogin }) {
         // User closed the popup, don't show an error
         return;
       }
-      setError(friendlyMessage(err));
+      showError(friendlyMessage(err), 'error');
     } finally {
       setGoogleLoading(false);
     }
@@ -508,36 +502,7 @@ export default function AuthPage({ onLogin }) {
                 <div style={{ flex: 1, height: 1, background: t.dividerLine }} />
               </div>
 
-              {}
-              {/* Error / Success messages */}
-                {error && (
-                  <div style={{
-                    padding: '9px 14px',
-                    borderRadius: 12,
-                    background: isDark ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.08)',
-                    border: `1px solid ${isDark ? 'rgba(239,68,68,0.3)' : 'rgba(239,68,68,0.2)'}`,
-                    color: isDark ? '#fca5a5' : '#dc2626',
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    marginBottom: 4,
-                  }}>
-                    {error}
-                  </div>
-                )}
-                {success && (
-                  <div style={{
-                    padding: '9px 14px',
-                    borderRadius: 12,
-                    background: isDark ? 'rgba(16,185,129,0.12)' : 'rgba(16,185,129,0.08)',
-                    border: `1px solid ${isDark ? 'rgba(16,185,129,0.3)' : 'rgba(16,185,129,0.2)'}`,
-                    color: isDark ? '#6ee7b7' : '#059669',
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    marginBottom: 4,
-                  }}>
-                    {success}
-                  </div>
-                )}
+
 
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 

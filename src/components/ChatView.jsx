@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Play, Download, MoreVertical, PlusCircle, Send, Bot, Loader2 } from 'lucide-react';
 import { api, friendlyMessage } from '../utils/api';
+import { useError } from '../context/ErrorContext';
 
 function renderRichText(text) {
   const html = text
@@ -66,6 +67,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef(null);
   const initialSentRef = useRef(false);
+  const { showError } = useError();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,10 +104,11 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       ));
     } catch (err) {
       console.error('[ChatView] Error:', err);
-      // Replace thinking bubble with error message
+      showError(friendlyMessage(err), 'error');
+      // Replace thinking bubble with a brief inline note
       setMessages(prev => prev.map(msg =>
         msg.id === thinkingId
-          ? { ...msg, content: `⚠️ ${friendlyMessage(err)}`, isThinking: false, isError: true }
+          ? { ...msg, content: 'Something went wrong. Please try again.', isThinking: false, isError: true }
           : msg
       ));
     }
