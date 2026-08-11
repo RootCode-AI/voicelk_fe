@@ -29,7 +29,7 @@ function groupByDate(items) {
   return Object.entries(groups).map(([dateLabel, items]) => ({ dateLabel, items }));
 }
 
-export default function HistoryView({ isDark, userData }) {
+export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
   const [historyGroups, setHistoryGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -84,6 +84,7 @@ export default function HistoryView({ isDark, userData }) {
     responseBorder: isDark ? 'rgba(255,255,255,0.06)' : '#e5e7eb',
     responseText: isDark ? '#94a3b8' : '#6b7280',
     errorText: isDark ? '#fca5a5' : '#dc2626',
+    itemHoverBg: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
   };
 
   return (
@@ -150,16 +151,30 @@ export default function HistoryView({ isDark, userData }) {
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   {group.items.map((item, ii) => (
                     <div key={item.id ?? ii}>
-                      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16, padding: '18px 0' }}>
-
-                        <button style={{
-                          minWidth: 40, height: 40, borderRadius: '50%',
-                          background: theme.playBg, border: 'none', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          flexShrink: 0, marginTop: 2, transition: 'background 0.15s',
+                      <div 
+                        onClick={() => onSelectHistoryItem && onSelectHistoryItem(item)}
+                        style={{ 
+                          display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16, 
+                          padding: '18px 12px', margin: '0 -12px',
+                          cursor: 'pointer', borderRadius: 12,
+                          transition: 'background 0.2s'
                         }}
+                        onMouseEnter={e => e.currentTarget.style.background = theme.itemHoverBg}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <button 
+                          style={{
+                            minWidth: 40, height: 40, borderRadius: '50%',
+                            background: theme.playBg, border: 'none', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            flexShrink: 0, marginTop: 2, transition: 'background 0.15s',
+                          }}
                           onMouseEnter={e => e.currentTarget.style.background = theme.playBgHover}
                           onMouseLeave={e => e.currentTarget.style.background = theme.playBg}
+                          onClick={(e) => {
+                            e.stopPropagation(); // prevent triggering row click if they just click play
+                            // audio play logic would go here
+                          }}
                         >
                           <Play size={14} strokeWidth={0} fill={theme.playIcon} style={{ marginLeft: 2 }} />
                         </button>
@@ -201,7 +216,7 @@ export default function HistoryView({ isDark, userData }) {
                       </div>
 
                       {ii < group.items.length - 1 && (
-                        <div style={{ height: 1, background: theme.divider, width: '100%' }} />
+                        <div style={{ height: 1, background: theme.divider, width: '100%', margin: '4px 0' }} />
                       )}
                     </div>
                   ))}

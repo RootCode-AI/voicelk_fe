@@ -60,7 +60,7 @@ function ThinkingBubble({ isDark }) {
   );
 }
 
-export default function ChatView({ t, isDark, initialMessage = '', userData }) {
+export default function ChatView({ t, isDark, initialMessage = '', initialHistoryItem = null, userData }) {
   const [messages, setMessages] = useState([]);
   const [inputVal, setInputVal] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -112,13 +112,21 @@ export default function ChatView({ t, isDark, initialMessage = '', userData }) {
   };
 
   useEffect(() => {
-    if (initialMessage && !initialSentRef.current) {
+    if (initialHistoryItem && !initialSentRef.current) {
+      initialSentRef.current = true;
+      const msgs = [];
+      msgs.push({ id: Date.now(), type: 'user', content: initialHistoryItem.content });
+      if (initialHistoryItem.responseText) {
+        msgs.push({ id: Date.now() + 1, type: 'ai', content: initialHistoryItem.responseText });
+      }
+      setMessages(msgs);
+    } else if (initialMessage && !initialSentRef.current) {
       initialSentRef.current = true;
       const userMsg = { id: Date.now(), type: 'user', content: initialMessage };
       setMessages([userMsg]);
       sendToBackend(initialMessage);
     }
-  }, [initialMessage]);
+  }, [initialMessage, initialHistoryItem]);
 
   const handleSend = async (e) => {
     e.preventDefault();

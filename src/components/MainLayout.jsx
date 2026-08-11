@@ -377,6 +377,7 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeNav, setActiveNav] = useState('new_chat');
   const [chatInitialMessage, setChatInitialMessage] = useState('');
+  const [chatInitialHistoryItem, setChatInitialHistoryItem] = useState(null);
 
   // Redirect away from profile if logged out
   useEffect(() => {
@@ -387,12 +388,20 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
 
   const handleHomeSubmit = (message) => {
     setChatInitialMessage(message);
+    setChatInitialHistoryItem(null);
     setActiveNav('chat');
   };
 
   const handleNewChat = () => {
     setChatInitialMessage('');
+    setChatInitialHistoryItem(null);
     setActiveNav('new_chat');
+  };
+
+  const handleSelectHistoryItem = (item) => {
+    setChatInitialMessage('');
+    setChatInitialHistoryItem(item);
+    setActiveNav('chat');
   };
 
   const t = isDark ? DARK : LIGHT;
@@ -525,11 +534,11 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
           {activeNav === 'profile' ? (
             <ProfileView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} onLogout={onLogout} userData={userData} />
           ) : activeNav === 'history' ? (
-            <HistoryView isDark={isDark} userData={userData} />
+            <HistoryView isDark={isDark} userData={userData} onSelectHistoryItem={handleSelectHistoryItem} />
           ) : activeNav === 'help' ? (
             <HelpView isDark={isDark} />
           ) : activeNav === 'chat' ? (
-            <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} userData={userData} />
+            <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} initialHistoryItem={chatInitialHistoryItem} userData={userData} />
           ) : (
             <HomeView t={t} isDark={isDark} onSubmit={handleHomeSubmit} />
           )}
