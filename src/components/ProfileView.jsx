@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { api } from '../utils/api';
+import { api, friendlyMessage } from '../utils/api';
 import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut } from 'lucide-react';
+import { useError } from '../context/ErrorContext';
 
 export default function ProfileView({ isDark, onToggleDark, onLogout, userData }) {
   const [user, setUser] = useState({
@@ -9,6 +10,8 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
     avatar: ''
   });
   
+  const { showError } = useError();
+
   useEffect(() => {
     if (userData && userData.userId) {
       api.get(`/api/reg/${userData.userId}`)
@@ -23,6 +26,7 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
         })
         .catch(err => {
           console.error("Failed to fetch user profile", err);
+          showError(friendlyMessage(err), 'error');
         });
     } else {
       setUser({

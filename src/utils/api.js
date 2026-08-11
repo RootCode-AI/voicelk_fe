@@ -59,6 +59,39 @@ export class ApiError extends Error {
 
 export function friendlyMessage(err) {
   if (err instanceof ApiError) return err.userMessage;
-  if (err instanceof Error)    return err.message || 'An unexpected error occurred.';
-  return 'An unexpected error occurred.';
+
+  // Firebase / Google auth errors
+  if (err?.code) {
+    const firebaseMessages = {
+      'auth/email-already-in-use': 'This email is already registered. Please sign in instead.',
+      'auth/invalid-email': 'Please enter a valid email address.',
+      'auth/user-not-found': 'No account found with this email. Please register first.',
+      'auth/wrong-password': 'Incorrect password. Please try again.',
+      'auth/too-many-requests': 'Too many attempts. Please wait a moment and try again.',
+      'auth/network-request-failed': 'Network error. Please check your connection and try again.',
+      'auth/popup-blocked': 'Sign-in popup was blocked by your browser. Please allow popups and try again.',
+      'auth/account-exists-with-different-credential': 'An account already exists with this email using a different sign-in method.',
+      'auth/invalid-credential': 'Invalid credentials. Please check your email and password.',
+      'auth/user-disabled': 'This account has been disabled. Please contact support.',
+    };
+    if (firebaseMessages[err.code]) return firebaseMessages[err.code];
+  }
+
+  if (err instanceof TypeError && err.message === 'Failed to fetch') {
+    return 'Unable to connect to the server. Please check your internet connection.';
+  }
+
+  if (err instanceof Error) {
+    // Avoid exposing raw technical messages to users
+    const msg = err.message || '';
+    if (msg.toLowerCase().includes('network') || msg.toLowerCase().includes('fetch')) {
+      return 'Connection error. Please check your internet and try again.';
+    }
+    if (msg.toLowerCase().includes('timeout')) {
+      return 'The request timed out. Please try again.';
+    }
+    return msg || 'Something went wrong. Please try again.';
+  }
+
+  return 'Something went wrong. Please try again.';
 }
