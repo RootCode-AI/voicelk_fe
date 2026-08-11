@@ -19,7 +19,7 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-function AudioPlayer({ audioId, audioDuration, isDark }) {
+function AudioPlayer({ audioId, audioDuration, isDark, userId }) {
   const audioRef = useRef(null);
   const progressRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -120,13 +120,22 @@ function AudioPlayer({ audioId, audioDuration, isDark }) {
 
   const handleDownload = useCallback(() => {
     if (!blobUrl) return;
+
+    // Log the download to the backend
+    if (userId && audioId) {
+      api.post('/api/download-logs', {
+        user: { userId: userId },
+        audio: { audioId: audioId }
+      }).catch(err => console.warn('Failed to log download:', err));
+    }
+
     const a = document.createElement('a');
     a.href = blobUrl;
     a.download = `voicelk-audio-${audioId}.mp3`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, [blobUrl, audioId]);
+  }, [blobUrl, audioId, userId]);
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -483,6 +492,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
                     audioId={msg.audioId}
                     audioDuration={msg.audioDuration}
                     isDark={isDark}
+                    userId={userData?.userId}
                   />
                 )}
               </div>

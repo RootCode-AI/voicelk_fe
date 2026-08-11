@@ -203,8 +203,8 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat, 
       zIndex: 20,
     }}>
       <button
-        onClick={onLogoClick}
-        title="Open sidebar"
+        onClick={() => { if (onNewChat) onNewChat(); else setActiveNav('new_chat'); }}
+        title="Open Chat"
         style={{
           background: 'none', border: 'none', cursor: 'pointer',
           padding: '4px 0 10px', lineHeight: 0,
@@ -275,7 +275,11 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
         justifyContent: 'space-between',
         marginBottom: 14, paddingLeft: 2,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div 
+          onClick={() => handleNav('new_chat')}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+          title="Open Chat"
+        >
           <img src={voiceLKIcon} alt="VoiceLK"
             style={{ width: 26, height: 26, objectFit: 'contain' }} />
           <span style={{
@@ -472,23 +476,31 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {isAuthenticated ? (
                 <>
-                  <IconBtn title="Notifications" t={t}>
-                    <Bell size={18} strokeWidth={1.8} />
-                  </IconBtn>
-                  <IconBtn title="Settings" t={t}>
-                    <Settings size={18} strokeWidth={1.8} />
-                  </IconBtn>
-
                   <div
                     title={userData?.email || 'User'}
                     style={{
-                    width: 32, height: 32, borderRadius: '50%',
-                    background: t.avatarBg,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 12, fontWeight: 700, color: t.avatarText,
-                    cursor: 'pointer', marginLeft: 6, userSelect: 'none',
-                  }}>
-                    {(userData?.email?.[0] || 'U').toUpperCase()}
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      background: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
+                      padding: '4px 12px 4px 4px',
+                      borderRadius: 9999,
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+                      cursor: 'pointer', userSelect: 'none',
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9'}
+                  >
+                    <div style={{
+                      width: 28, height: 28, borderRadius: '50%',
+                      background: t.avatarBg,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 12, fontWeight: 700, color: t.avatarText,
+                    }}>
+                      {((userData?.userName || userData?.email)?.[0] || 'U').toUpperCase()}
+                    </div>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: t.itemText }}>
+                      {userData?.userName ? userData.userName.split(' ')[0] : (userData?.email ? userData.email.split('@')[0].split(/[._+-]/)[0].replace(/^\w/, c => c.toUpperCase()) : 'User')}
+                    </span>
                   </div>
                 </>
               ) : (
