@@ -119,13 +119,14 @@ function AudioPlayer({ audioId, audioDuration, isDark }) {
   }, [duration]);
 
   const handleDownload = useCallback(() => {
+    if (!blobUrl) return;
     const a = document.createElement('a');
-    a.href = streamUrl;
+    a.href = blobUrl;
     a.download = `voicelk-audio-${audioId}.mp3`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, [streamUrl, audioId]);
+  }, [blobUrl, audioId]);
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
