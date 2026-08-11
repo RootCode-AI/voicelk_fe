@@ -525,11 +525,11 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
           {activeNav === 'profile' ? (
             <ProfileView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} onLogout={onLogout} userData={userData} />
           ) : activeNav === 'history' ? (
-            <HistoryView isDark={isDark} />
+            <HistoryView isDark={isDark} userData={userData} />
           ) : activeNav === 'help' ? (
             <HelpView isDark={isDark} />
           ) : activeNav === 'chat' ? (
-            <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} />
+            <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} userData={userData} />
           ) : (
             <HomeView t={t} isDark={isDark} onSubmit={handleHomeSubmit} />
           )}

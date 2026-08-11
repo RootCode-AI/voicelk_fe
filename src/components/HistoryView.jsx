@@ -1,8 +1,66 @@
-import React, { useState } from 'react';
-import { Play, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Play, Clock, Loader2 } from 'lucide-react';
+import { api } from '../utils/api';
 
-export default function HistoryView({ isDark }) {
+function formatRelativeDate(dateStr) {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatTime(dateStr) {
+  const date = new Date(dateStr);
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+function groupByDate(items) {
+  const groups = {};
+  items.forEach(item => {
+    const label = formatRelativeDate(item.timestamp);
+    if (!groups[label]) groups[label] = [];
+    groups[label].push(item);
+  });
+  return Object.entries(groups).map(([dateLabel, items]) => ({ dateLabel, items }));
+}
+
+export default function HistoryView({ isDark, userData }) {
   const [historyGroups, setHistoryGroups] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!userData?.userId) return;
+
+    setLoading(true);
+    setError('');
+
+    api.get(`/api/ask/history/${userData.userId}`)
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map(item => ({
+            id: item.queryId,
+            content: item.inputText,
+            responseText: item.responseText || '',
+            timestamp: item.timestamp,
+            statusTag: item.source || 'AI',
+          }));
+          setHistoryGroups(groupByDate(mapped));
+        } else {
+          setHistoryGroups([]);
+        }
+      })
+      .catch(err => {
+        console.error('[HistoryView] Failed to load history:', err);
+        setError('Failed to load history.');
+      })
+      .finally(() => setLoading(false));
+  }, [userData?.userId]);
 
   const theme = {
     bg: isDark ? '#060f1e' : '#ffffff',
@@ -22,17 +80,56 @@ export default function HistoryView({ isDark }) {
     btnBgHover: isDark ? '#1e293b' : '#f9fafb',
     btnBorder: isDark ? 'rgba(255,255,255,0.15)' : '#e5e7eb',
     btnText: isDark ? '#38bdf8' : '#2563eb',
+    responseBg: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+    responseBorder: isDark ? 'rgba(255,255,255,0.06)' : '#e5e7eb',
+    responseText: isDark ? '#94a3b8' : '#6b7280',
+    errorText: isDark ? '#fca5a5' : '#dc2626',
   };
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: theme.bg, height: '100%', fontFamily: "'Inter', system-ui, sans-serif" }}>
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+      `}</style>
       <div style={{ maxWidth: 780, width: '100%', margin: '0 auto', padding: '36px 24px 48px 24px', display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
 
         <h1 style={{ fontSize: 36, fontWeight: 800, color: theme.heading, margin: '0 0 24px 0', letterSpacing: '-0.5px' }}>
           History
         </h1>
 
-        {historyGroups.length === 0 ? (
+        {!userData?.userId ? (
+          <div style={{
+            flex: 1,
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            minHeight: 400, gap: 12, color: theme.emptyText,
+          }}>
+            <Clock size={44} strokeWidth={1.4} style={{ opacity: 0.3 }} />
+            <p style={{ fontSize: 15, fontWeight: 500, margin: 0 }}>Please log in to see your history</p>
+          </div>
+        ) : loading ? (
+          <div style={{
+            flex: 1,
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            minHeight: 400, gap: 12, color: theme.emptyText,
+          }}>
+            <Loader2 size={32} strokeWidth={2} style={{ animation: 'spin 0.8s linear infinite', opacity: 0.5 }} />
+            <p style={{ fontSize: 14, fontWeight: 500, margin: 0 }}>Loading history...</p>
+          </div>
+        ) : error ? (
+          <div style={{
+            flex: 1,
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            minHeight: 400, gap: 12, color: theme.errorText,
+          }}>
+            <p style={{ fontSize: 15, fontWeight: 500, margin: 0 }}>⚠️ {error}</p>
+          </div>
+        ) : historyGroups.length === 0 ? (
           <div style={{
             flex: 1,
             display: 'flex', flexDirection: 'column',
@@ -67,13 +164,30 @@ export default function HistoryView({ isDark }) {
                           <Play size={14} strokeWidth={0} fill={theme.playIcon} style={{ marginLeft: 2 }} />
                         </button>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
                           <p style={{ fontSize: 15, color: theme.itemText, fontWeight: 500, lineHeight: 1.6, margin: 0 }}>
                             {item.content}
                           </p>
+
+                          {item.responseText && (
+                            <div style={{
+                              fontSize: 13, color: theme.responseText, lineHeight: 1.5,
+                              padding: '8px 12px', borderRadius: 10,
+                              background: theme.responseBg,
+                              border: `1px solid ${theme.responseBorder}`,
+                              maxHeight: 60, overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}>
+                              {item.responseText.length > 120
+                                ? item.responseText.substring(0, 120) + '...'
+                                : item.responseText
+                              }
+                            </div>
+                          )}
+
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: theme.metaText, fontWeight: 600 }}>
                             <Clock size={12} strokeWidth={2} style={{ flexShrink: 0 }} />
-                            <span>{item.timestamp}</span>
+                            <span>{formatTime(item.timestamp)}</span>
                             <span style={{ color: theme.dot, fontWeight: 700, fontSize: 14 }}>·</span>
                             <span style={{
                               background: theme.badgeBg, color: theme.badgeText,
@@ -96,22 +210,6 @@ export default function HistoryView({ isDark }) {
             ))}
           </div>
         )}
-
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32, marginBottom: 16 }}>
-          <button
-            style={{
-              borderRadius: 9999, border: `1px solid ${theme.btnBorder}`,
-              background: theme.btnBg, color: theme.btnText,
-              fontWeight: 600, fontSize: 13.5,
-              padding: '9px 24px', cursor: 'pointer',
-              fontFamily: 'inherit', transition: 'background 0.15s, border-color 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = theme.btnBgHover}
-            onMouseLeave={e => e.currentTarget.style.background = theme.btnBg}
-          >
-            Load earlier interactions
-          </button>
-        </div>
 
       </div>
     </div>
