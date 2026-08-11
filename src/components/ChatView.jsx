@@ -1,7 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
-import { Play, Download, MoreVertical, PlusCircle, Send, Bot, Loader2 } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2 } from 'lucide-react';
 import { api, friendlyMessage } from '../utils/api';
 import { useError } from '../context/ErrorContext';
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function renderRichText(text) {
   const html = text
@@ -10,40 +12,245 @@ function renderRichText(text) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function AudioPlayer({ duration, t }) {
+function formatTime(seconds) {
+  if (!seconds || !isFinite(seconds)) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function AudioPlayer({ audioId, audioDuration, isDark }) {
+  const audioRef = useRef(null);
+  const progressRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(audioDuration || 0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [blobUrl, setBlobUrl] = useState(null);
+
+  const streamUrl = `${BASE_URL}/api/audios/${audioId}/stream`;
+
+  // Fetch the audio as a Blob with Authorization header
+  useEffect(() => {
+    let objectUrl = null;
+    const fetchAudio = async () => {
+      try {
+        const token = localStorage.getItem('voicelk_token');
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const response = await fetch(streamUrl, { headers });
+        if (!response.ok) throw new Error('Failed to fetch audio');
+        
+        const blob = await response.blob();
+        objectUrl = URL.createObjectURL(blob);
+        setBlobUrl(objectUrl);
+      } catch (err) {
+        console.error('Audio fetch error:', err);
+        setIsLoading(false); // Stop loading on error
+      }
+    };
+    
+    fetchAudio();
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [streamUrl]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const onLoadedMetadata = () => {
+      if (audio.duration && isFinite(audio.duration)) {
+        setDuration(audio.duration);
+      }
+      setIsLoading(false);
+    };
+    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const onEnded = () => { setIsPlaying(false); setCurrentTime(0); };
+    const onWaiting = () => setIsLoading(true);
+    const onCanPlay = () => setIsLoading(false);
+    const onError = () => { setIsLoading(false); setIsPlaying(false); };
+
+    audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('waiting', onWaiting);
+    audio.addEventListener('canplay', onCanPlay);
+    audio.addEventListener('error', onError);
+
+    return () => {
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('waiting', onWaiting);
+      audio.removeEventListener('canplay', onCanPlay);
+      audio.removeEventListener('error', onError);
+    };
+  }, [blobUrl]); // re-bind when blobUrl changes
+
+  const togglePlay = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      setIsLoading(true);
+      audio.play().then(() => {
+        setIsPlaying(true);
+        setIsLoading(false);
+      }).catch(() => {
+        setIsLoading(false);
+      });
+    }
+  }, [isPlaying]);
+
+  const handleSeek = useCallback((e) => {
+    const audio = audioRef.current;
+    const bar = progressRef.current;
+    if (!audio || !bar || !duration) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = ratio * duration;
+    setCurrentTime(audio.currentTime);
+  }, [duration]);
+
+  const handleDownload = useCallback(() => {
+    const a = document.createElement('a');
+    a.href = streamUrl;
+    a.download = `voicelk-audio-${audioId}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, [streamUrl, audioId]);
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  // Theme colors
+  const colors = {
+    bg: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+    border: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb',
+    playBtnBg: isDark ? '#0ea5e9' : '#3b82f6',
+    playBtnHover: isDark ? '#38bdf8' : '#2563eb',
+    trackBg: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb',
+    trackFill: isDark ? '#0ea5e9' : '#3b82f6',
+    timeText: isDark ? '#94a3b8' : '#6b7280',
+    iconColor: isDark ? '#94a3b8' : '#6b7280',
+    iconHover: isDark ? '#e2e8f0' : '#374151',
+  };
+
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 16,
-      background: '#ffffff', borderRadius: 9999, padding: '8px 16px',
-      border: '1px solid #e5e7eb', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-      marginTop: 16, maxWidth: 400
+      display: 'flex', alignItems: 'center', gap: 12,
+      background: colors.bg,
+      borderRadius: 16,
+      padding: '10px 14px',
+      border: `1px solid ${colors.border}`,
+      marginTop: 12,
+      maxWidth: 420,
+      transition: 'all 0.2s ease',
     }}>
-      <button style={{
-        width: 36, height: 36, borderRadius: '50%', background: '#3b82f6',
-        border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', flexShrink: 0
-      }}>
-        <Play size={18} color="#ffffff" fill="#ffffff" style={{ marginLeft: 3 }} />
+      {blobUrl && <audio ref={audioRef} src={blobUrl} preload="metadata" />}
+
+      {/* Play / Pause button */}
+      <button
+        onClick={togglePlay}
+        disabled={isLoading}
+        style={{
+          width: 36, height: 36, borderRadius: '50%',
+          background: colors.playBtnBg,
+          border: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: isLoading ? 'wait' : 'pointer',
+          flexShrink: 0,
+          transition: 'background 0.15s, transform 0.1s',
+          transform: 'scale(1)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = colors.playBtnHover;
+          e.currentTarget.style.transform = 'scale(1.06)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = colors.playBtnBg;
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+      >
+        {isLoading ? (
+          <Loader2 size={16} color="#fff" strokeWidth={2.5} style={{ animation: 'spin 0.8s linear infinite' }} />
+        ) : isPlaying ? (
+          <Pause size={16} color="#fff" fill="#fff" />
+        ) : (
+          <Play size={16} color="#fff" fill="#fff" style={{ marginLeft: 2 }} />
+        )}
       </button>
-      
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div style={{ height: 4, background: '#e5e7eb', borderRadius: 2, position: 'relative' }}>
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', background: '#3b82f6', borderRadius: 2 }} />
+
+      {/* Progress bar + time */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+        <div
+          ref={progressRef}
+          onClick={handleSeek}
+          style={{
+            height: 6, background: colors.trackBg, borderRadius: 3,
+            position: 'relative', cursor: 'pointer',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0,
+            width: `${progress}%`,
+            background: colors.trackFill,
+            borderRadius: 3,
+            transition: isPlaying ? 'none' : 'width 0.15s ease',
+          }} />
+          {/* Thumb indicator */}
+          <div style={{
+            position: 'absolute',
+            left: `${progress}%`,
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 12, height: 12,
+            borderRadius: '50%',
+            background: colors.trackFill,
+            boxShadow: `0 0 0 2px ${isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.9)'}`,
+            opacity: isPlaying || progress > 0 ? 1 : 0,
+            transition: 'opacity 0.15s',
+          }} />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6b7280', fontWeight: 500 }}>
-          <span>0:14</span>
-          <span>{duration}</span>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          fontSize: 11, color: colors.timeText, fontWeight: 500,
+          fontVariantNumeric: 'tabular-nums',
+        }}>
+          <span>{formatTime(currentTime)}</span>
+          <span>{formatTime(duration)}</span>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6b7280' }}>
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 4 }}>
-          <Download size={18} strokeWidth={2} />
-        </button>
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 4 }}>
-          <MoreVertical size={18} strokeWidth={2} />
-        </button>
-      </div>
+      {/* Download button */}
+      <button
+        onClick={handleDownload}
+        title="Download audio"
+        style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: colors.iconColor, padding: 4,
+          display: 'flex', alignItems: 'center',
+          transition: 'color 0.15s, transform 0.1s',
+          borderRadius: 6,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = colors.iconHover;
+          e.currentTarget.style.transform = 'scale(1.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = colors.iconColor;
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+      >
+        <Download size={16} strokeWidth={2} />
+      </button>
     </div>
   );
 }
@@ -77,6 +284,41 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
     scrollToBottom();
   }, [messages]);
 
+  // Fetch audio metadata for an answer and update the message (with polling)
+  const fetchAudioForMessage = useCallback((msgId, answerId, attempt = 1) => {
+    if (!answerId) return;
+    
+    // Stop polling after 15 attempts (45 seconds)
+    if (attempt > 15) {
+      setMessages(prev => prev.map(msg =>
+        msg.id === msgId ? { ...msg, isAudioLoading: false } : msg
+      ));
+      return;
+    }
+
+    api.get(`/api/audios/answer/${answerId}`)
+      .then(audio => {
+        if (audio && audio.audioId) {
+          setMessages(prev => prev.map(msg =>
+            msg.id === msgId
+              ? { ...msg, audioId: audio.audioId, audioDuration: audio.duration, isAudioLoading: false }
+              : msg
+          ));
+        }
+      })
+      .catch(err => {
+        if (err?.status === 404) {
+          // Audio not ready yet, poll again in 3 seconds
+          setTimeout(() => fetchAudioForMessage(msgId, answerId, attempt + 1), 3000);
+        } else {
+          console.warn('[ChatView] Failed to fetch audio for answer:', answerId, err);
+          setMessages(prev => prev.map(msg =>
+            msg.id === msgId ? { ...msg, isAudioLoading: false } : msg
+          ));
+        }
+      });
+  }, []);
+
   const sendToBackend = async (text) => {
     // Add a "thinking" placeholder
     const thinkingId = Date.now() + 1;
@@ -99,9 +341,22 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       // Replace thinking bubble with real response
       setMessages(prev => prev.map(msg =>
         msg.id === thinkingId
-          ? { ...msg, content: data.responseText || 'No response received.', isThinking: false }
+          ? {
+              ...msg,
+              content: data.responseText || 'No response received.',
+              isThinking: false,
+              answerId: data.answerId,
+              audioId: data.audioId || null,
+              audioDuration: data.audioDuration || null,
+              isAudioLoading: !data.audioId && data.answerId ? true : false,
+            }
           : msg
       ));
+
+      // If the backend didn't return audioId directly, try fetching it
+      if (!data.audioId && data.answerId) {
+        fetchAudioForMessage(thinkingId, data.answerId);
+      }
     } catch (err) {
       console.error('[ChatView] Error:', err);
       showError(friendlyMessage(err), 'error');
@@ -117,10 +372,27 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
   useEffect(() => {
     if (initialHistoryItem && !initialSentRef.current) {
       initialSentRef.current = true;
+      const userMsgId = Date.now();
+      const aiMsgId = Date.now() + 1;
       const msgs = [];
-      msgs.push({ id: Date.now(), type: 'user', content: initialHistoryItem.content });
+      msgs.push({ id: userMsgId, type: 'user', content: initialHistoryItem.content });
       if (initialHistoryItem.responseText) {
-        msgs.push({ id: Date.now() + 1, type: 'ai', content: initialHistoryItem.responseText });
+        const aiMsg = {
+          id: aiMsgId,
+          type: 'ai',
+          content: initialHistoryItem.responseText,
+          answerId: initialHistoryItem.answerId || null,
+          audioId: initialHistoryItem.audioId || null,
+          audioDuration: initialHistoryItem.audioDuration || null,
+          isAudioLoading: !initialHistoryItem.audioId && initialHistoryItem.answerId ? true : false,
+        };
+        msgs.push(aiMsg);
+
+        // If we have an answerId but no audioId, try fetching audio
+        if (!initialHistoryItem.audioId && initialHistoryItem.answerId) {
+          // Fetch after state update
+          setTimeout(() => fetchAudioForMessage(aiMsgId, initialHistoryItem.answerId), 100);
+        }
       }
       setMessages(msgs);
     } else if (initialMessage && !initialSentRef.current) {
@@ -192,8 +464,25 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
                   renderRichText(msg.content)
                 )}
                 
-                {msg.hasAudio && (
-                  <AudioPlayer duration={msg.audioDuration} t={t} />
+                {msg.isAudioLoading && !msg.audioId && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    background: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
+                    borderRadius: 16, padding: '10px 14px',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}`,
+                    marginTop: 12, maxWidth: 420, color: isDark ? '#94a3b8' : '#6b7280', fontSize: 13
+                  }}>
+                    <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                    Generating audio...
+                  </div>
+                )}
+                
+                {msg.audioId && (
+                  <AudioPlayer
+                    audioId={msg.audioId}
+                    audioDuration={msg.audioDuration}
+                    isDark={isDark}
+                  />
                 )}
               </div>
             </div>

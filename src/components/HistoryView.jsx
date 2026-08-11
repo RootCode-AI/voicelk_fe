@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Play, Clock, Loader2, Trash2 } from 'lucide-react';
+import { Bot, Clock, Loader2, Trash2 } from 'lucide-react';
 import { api, friendlyMessage } from '../utils/api';
 import { useError } from '../context/ErrorContext';
 
@@ -49,6 +49,9 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
             responseText: item.responseText || '',
             timestamp: item.timestamp,
             statusTag: item.source || 'AI',
+            answerId: item.answerId || null,
+            audioId: item.audioId || null,
+            audioDuration: item.audioDuration || null,
           }));
           setHistoryGroups(groupByDate(mapped));
         } else {
@@ -173,22 +176,16 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
                         onMouseEnter={e => e.currentTarget.style.background = theme.itemHoverBg}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
-                        <button 
+                        <div 
                           style={{
                             minWidth: 40, height: 40, borderRadius: '50%',
-                            background: theme.playBg, border: 'none', cursor: 'pointer',
+                            background: theme.playBg,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            flexShrink: 0, marginTop: 2, transition: 'background 0.15s',
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.background = theme.playBgHover}
-                          onMouseLeave={e => e.currentTarget.style.background = theme.playBg}
-                          onClick={(e) => {
-                            e.stopPropagation(); // prevent triggering row click if they just click play
-                            // audio play logic would go here
+                            flexShrink: 0, marginTop: 2,
                           }}
                         >
-                          <Play size={14} strokeWidth={0} fill={theme.playIcon} style={{ marginLeft: 2 }} />
-                        </button>
+                          <Bot size={18} strokeWidth={1.8} color={theme.playIcon} />
+                        </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
                           <p style={{ fontSize: 15, color: theme.itemText, fontWeight: 500, lineHeight: 1.6, margin: 0 }}>
