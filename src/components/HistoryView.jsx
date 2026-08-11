@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Play, Clock, Loader2 } from 'lucide-react';
+import { Play, Clock, Loader2, Trash2 } from 'lucide-react';
 import { api } from '../utils/api';
 
 function formatRelativeDate(dateStr) {
@@ -61,6 +61,26 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
       })
       .finally(() => setLoading(false));
   }, [userData?.userId]);
+
+  const handleDelete = async (e, queryId) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this chat history?')) return;
+
+    try {
+      await api.delete(`/api/queries/${queryId}`);
+      // Remove from UI
+      setHistoryGroups(prevGroups => {
+        const newGroups = prevGroups.map(group => ({
+          ...group,
+          items: group.items.filter(item => item.id !== queryId)
+        })).filter(group => group.items.length > 0);
+        return newGroups;
+      });
+    } catch (err) {
+      console.error('[HistoryView] Failed to delete history:', err);
+      alert('Failed to delete history item.');
+    }
+  };
 
   const theme = {
     bg: isDark ? '#060f1e' : '#ffffff',
@@ -213,6 +233,28 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
                             </span>
                           </div>
                         </div>
+
+                        <button 
+                          style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            color: theme.metaText, padding: '8px', borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            transition: 'background 0.15s, color 0.15s',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = isDark ? 'rgba(239,68,68,0.1)' : '#fee2e2';
+                            e.currentTarget.style.color = isDark ? '#f87171' : '#ef4444';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'none';
+                            e.currentTarget.style.color = theme.metaText;
+                          }}
+                          onClick={(e) => handleDelete(e, item.id)}
+                          title="Delete history"
+                        >
+                          <Trash2 size={16} strokeWidth={2} />
+                        </button>
+
                       </div>
 
                       {ii < group.items.length - 1 && (
