@@ -28,9 +28,17 @@ export async function apiFetch(endpoint, options = {}) {
     let serverMessage = '';
     try {
       const body = await response.json();
-      serverMessage = body?.detail || body?.message || body?.error || '';
+      const rawMsg = body?.detail || body?.message || body?.error || '';
+      
+      // Filter out technical/developer-friendly messages (Java exceptions, SQL errors, etc)
+      const isTechnical = /exception|trace|sql|nullpointer|internal server error|line \d+|file not found|unauthorized|failed to parse/i.test(rawMsg);
+      
+      if (rawMsg && !isTechnical && rawMsg.length < 100) {
+        serverMessage = rawMsg;
+      }
     } catch (_) { /* ignore parse errors */ }
 
+    // Fall back to friendly predefined messages based on HTTP status code
     const userMessage = serverMessage || getHttpErrorMessage(response.status);
     throw new ApiError(response.status, userMessage);
   }

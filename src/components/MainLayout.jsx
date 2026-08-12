@@ -16,6 +16,7 @@ import ProfileView from './ProfileView';
 import ChatView from './ChatView';
 import HistoryView from './HistoryView';
 import HelpView from './HelpView';
+import SettingsView from './SettingsView';
 
 const LIGHT = {
   pageBg: '#f0f4fa',
@@ -547,6 +548,8 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
             <ProfileView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} onLogout={onLogout} userData={userData} />
           ) : activeNav === 'history' ? (
             <HistoryView isDark={isDark} userData={userData} onSelectHistoryItem={handleSelectHistoryItem} />
+          ) : activeNav === 'settings' ? (
+            <SettingsView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} userData={userData} t={t} />
           ) : activeNav === 'help' ? (
             <HelpView isDark={isDark} />
           ) : activeNav === 'chat' ? (
