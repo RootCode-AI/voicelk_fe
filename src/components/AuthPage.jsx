@@ -229,6 +229,12 @@ export default function AuthPage({ onLogin }) {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showError('Please enter a valid email address.', 'warning');
+      return;
+    }
+
     if (!isLogin) {
       if (!userName) {
         showError('Please enter a username.', 'warning');
