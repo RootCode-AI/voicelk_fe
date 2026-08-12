@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2 } from 'lucide-react';
+import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2, Star, MessageSquare } from 'lucide-react';
 import { api, friendlyMessage } from '../utils/api';
 import { useError } from '../context/ErrorContext';
 
@@ -19,7 +19,167 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-function AudioPlayer({ audioId, audioDuration, isDark }) {
+function FeedbackWidget({ audioId, userId, userRole, isDark }) {
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [feedbackId, setFeedbackId] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showError } = useError();
+
+  useEffect(() => {
+    if (!audioId || !userId) return;
+    api.get(`/api/feedbacks/audio/${audioId}`)
+      .then(res => {
+        if (res.feedbackId) {
+          setFeedbackId(res.feedbackId);
+          setRating(res.rating);
+          setComment(res.comment || '');
+          setIsSaved(true);
+        }
+      })
+      .catch(() => {}); // 404 means no feedback yet, perfectly fine
+  }, [audioId, userId]);
+
+  const handleSubmit = async () => {
+    if (rating === 0) return;
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        rating,
+        comment,
+        registeredUser: { userId },
+        audio: { audioId }
+      };
+
+      if (feedbackId) {
+        await api.put(`/api/feedbacks/${feedbackId}`, payload);
+        showError('Feedback updated!', 'success', { duration: 2000 });
+      } else {
+        const res = await api.post('/api/feedbacks', payload);
+        setFeedbackId(res.feedbackId);
+        showError('Thank you for your feedback!', 'success', { duration: 2000 });
+      }
+      setIsSaved(true);
+      setIsExpanded(false);
+    } catch (err) {
+      showError('Failed to save feedback');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!userId || userRole === 'GUEST') return null; // Guest users can't leave feedback
+
+  return (
+    <div style={{
+      marginTop: 10,
+      background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+      borderRadius: 12,
+      padding: '10px 14px',
+      border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'}`,
+      maxWidth: 400
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {[1, 2, 3, 4, 5].map(star => (
+            <button
+              key={star}
+              onMouseEnter={() => setHoverRating(star)}
+              onMouseLeave={() => setHoverRating(0)}
+              onClick={() => {
+                setRating(star);
+                setIsExpanded(true);
+              }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+                color: (hoverRating || rating) >= star ? '#fbbf24' : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'),
+                transition: 'color 0.2s, transform 0.1s',
+                transform: hoverRating === star ? 'scale(1.15)' : 'scale(1)'
+              }}
+              title={`${star} Star${star > 1 ? 's' : ''}`}
+            >
+              <Star size={18} fill={(hoverRating || rating) >= star ? 'currentColor' : 'none'} strokeWidth={2} />
+            </button>
+          ))}
+        </div>
+        
+        {isSaved && !isExpanded && (
+          <span style={{ fontSize: 12, color: isDark ? '#10b981' : '#059669', fontWeight: 500 }}>
+            Feedback Saved
+          </span>
+        )}
+      </div>
+
+      {(isExpanded || (rating > 0 && !isSaved)) && (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10, animation: 'fadeIn 0.2s ease' }}>
+          <div style={{ position: 'relative' }}>
+            <MessageSquare size={14} style={{ position: 'absolute', top: 10, left: 10, color: isDark ? '#9ca3af' : '#6b7280' }} />
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Tell us more about this response... (optional)"
+              style={{
+                width: '100%',
+                background: isDark ? 'rgba(0,0,0,0.2)' : '#fff',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                borderRadius: 8,
+                padding: '8px 12px 8px 32px',
+                color: isDark ? '#f3f4f6' : '#1f2937',
+                fontSize: 13,
+                resize: 'none',
+                minHeight: 50,
+                outline: 'none',
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button
+              onClick={() => {
+                if (isSaved) setIsExpanded(false);
+                else setRating(0); // Cancel
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: isDark ? '#9ca3af' : '#6b7280',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: 4
+              }}
+            >
+              {isSaved ? 'Close' : 'Cancel'}
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting || rating === 0}
+              style={{
+                background: isSubmitting ? (isDark ? '#374151' : '#e5e7eb') : '#0ea5e9',
+                color: isSubmitting ? (isDark ? '#9ca3af' : '#9ca3af') : '#fff',
+                border: 'none',
+                padding: '4px 12px',
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: isSubmitting || rating === 0 ? 'not-allowed' : 'pointer',
+                transition: 'background 0.2s'
+              }}
+            >
+              {isSubmitting ? 'Saving...' : (feedbackId ? 'Update' : 'Submit')}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AudioPlayer({ audioId, audioDuration, isDark, userId }) {
   const audioRef = useRef(null);
   const progressRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -66,6 +226,13 @@ function AudioPlayer({ audioId, audioDuration, isDark }) {
       if (audio.duration && isFinite(audio.duration)) {
         setDuration(audio.duration);
       }
+      
+      // Apply user playback speed setting
+      const savedSpeed = localStorage.getItem('vlk_playbackSpeed');
+      if (savedSpeed) {
+        audio.playbackRate = parseFloat(savedSpeed);
+      }
+      
       setIsLoading(false);
     };
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
@@ -120,13 +287,22 @@ function AudioPlayer({ audioId, audioDuration, isDark }) {
 
   const handleDownload = useCallback(() => {
     if (!blobUrl) return;
+
+    // Log the download to the backend
+    if (userId && audioId) {
+      api.post('/api/download-logs', {
+        user: { userId: userId },
+        audio: { audioId: audioId }
+      }).catch(err => console.warn('Failed to log download:', err));
+    }
+
     const a = document.createElement('a');
     a.href = blobUrl;
     a.download = `voicelk-audio-${audioId}.mp3`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, [blobUrl, audioId]);
+  }, [blobUrl, audioId, userId]);
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
@@ -479,11 +655,20 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
                 )}
                 
                 {msg.audioId && (
-                  <AudioPlayer
-                    audioId={msg.audioId}
-                    audioDuration={msg.audioDuration}
-                    isDark={isDark}
-                  />
+                  <>
+                    <AudioPlayer
+                      audioId={msg.audioId}
+                      audioDuration={msg.audioDuration}
+                      isDark={isDark}
+                      userId={userData?.userId}
+                    />
+                    <FeedbackWidget
+                      audioId={msg.audioId}
+                      userId={userData?.userId}
+                      userRole={userData?.role}
+                      isDark={isDark}
+                    />
+                  </>
                 )}
               </div>
             </div>

@@ -255,12 +255,14 @@ export default function AuthPage({ onLogin }) {
         localStorage.setItem('voicelk_user', JSON.stringify({
           userId: data.userId,
           email: data.email,
+          userName: data.userName,
           role: data.role,
         }));
         if (onLogin) onLogin({
           token: data.token,
           userId: data.userId,
           email: data.email,
+          userName: data.userName,
           role: data.role,
         });
       } else {
@@ -299,6 +301,7 @@ export default function AuthPage({ onLogin }) {
       localStorage.setItem('voicelk_user', JSON.stringify({
         userId: data.userId,
         email: data.email,
+        userName: data.userName,
         role: data.role,
       }));
 
@@ -306,6 +309,7 @@ export default function AuthPage({ onLogin }) {
         token: data.token,
         userId: data.userId,
         email: data.email,
+        userName: data.userName,
         role: data.role,
       });
 
