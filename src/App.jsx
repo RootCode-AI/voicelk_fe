@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import AuthPage from './components/AuthPage';
-import MainLayout from './components/MainLayout';
-import ErrorBoundary from './components/ErrorBoundary';
+import AuthPage from './features/auth/components/AuthPage';
+import MainLayout from './components/layout/MainLayout/MainLayout';
+import ErrorBoundary from './components/common/ErrorBoundary/ErrorBoundary';
 import { ErrorProvider, useError } from './context/ErrorContext';
 
 function AppInner() {

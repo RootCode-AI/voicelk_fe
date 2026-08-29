@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
-import voiceLKIcon from '../assets/voicelk-icon.png';
+import voiceLKIcon from '../assets/images/voicelk-icon.png';
 
 const ErrorContext = createContext(null);
 

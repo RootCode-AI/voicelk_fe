@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bot, Clock, Loader2, Trash2 } from 'lucide-react';
-import { api, friendlyMessage } from '../utils/api';
-import { useError } from '../context/ErrorContext';
+import { api, friendlyMessage } from '../../services/api';
+import { useError } from '../../context/ErrorContext';
 
 function formatRelativeDate(dateStr) {
   const date = new Date(dateStr);

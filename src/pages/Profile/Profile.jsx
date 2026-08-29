@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { api, friendlyMessage } from '../utils/api';
+import { api, friendlyMessage } from '../../services/api';
 import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut } from 'lucide-react';
-import { useError } from '../context/ErrorContext';
+import { useError } from '../../context/ErrorContext';
 
 export default function ProfileView({ isDark, onToggleDark, onLogout, userData }) {
   const [user, setUser] = useState({

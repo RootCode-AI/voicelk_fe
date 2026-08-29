@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2, Star, MessageSquare } from 'lucide-react';
-import { api, friendlyMessage } from '../utils/api';
-import { useError } from '../context/ErrorContext';
+import { api, friendlyMessage } from '../../services/api';
+import { useError } from '../../context/ErrorContext';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
