@@ -41,20 +41,27 @@ VoiceLK allows students to type or paste ICT-related topics and receive AI-gener
 voicelk_fe/
 ├── public/
 ├── src/
-│   ├── assets/               # Static images
+│   ├── assets/
+│   │   ├── images/           # Static images
+│   │   └── styles/           # Global styles
 │   ├── components/
-│   │   ├── AuthPage.jsx      # Login & registration
-│   │   ├── ChatView.jsx      # Chat interface
-│   │   ├── ErrorBoundary.jsx # React error boundary
-│   │   ├── HelpView.jsx      # Help centre
-│   │   ├── HistoryView.jsx   # Interaction history
-│   │   ├── HomeView.jsx      # Home prompt input
-│   │   ├── MainLayout.jsx    # App shell & navigation
-│   │   └── ProfileView.jsx   # User profile & settings
-│   ├── context/
-│   │   └── ErrorContext.jsx  # Global toast notifications
-│   ├── utils/
-│   │   └── api.js            # API fetch wrapper
+│   │   ├── common/           # Common components (e.g., ErrorBoundary)
+│   │   └── layout/           # Layout components (e.g., MainLayout)
+│   ├── context/              # React context (e.g., ErrorContext)
+│   ├── features/
+│   │   └── auth/             # Feature specific components (e.g., AuthPage)
+│   ├── hooks/                # Custom React hooks
+│   ├── pages/
+│   │   ├── Chat/             # Chat interface
+│   │   ├── Help/             # Help centre
+│   │   ├── History/          # Interaction history
+│   │   ├── Home/             # Home prompt input
+│   │   ├── Profile/          # User profile & settings
+│   │   └── Settings/         # Settings page
+│   ├── routes/               # Application routes
+│   ├── services/             # API & third-party services (api.js, firebase.js)
+│   ├── store/                # Global state management
+│   ├── utils/                # Utility functions and constants
 │   ├── App.jsx
 │   └── main.jsx
 ├── index.html
