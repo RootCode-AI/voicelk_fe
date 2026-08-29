@@ -115,7 +115,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
   };
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', background: theme.bg, height: '100%', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ flex: 1, overflowY: 'auto', background: theme.bg, height: '100%', fontFamily: "'Quicksand', system-ui, sans-serif" }}>
       <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }

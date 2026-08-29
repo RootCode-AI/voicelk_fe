@@ -103,7 +103,7 @@ function Toast({ toast, onDismiss }) {
       animation: toast.exiting
         ? 'toastOut 0.3s ease forwards'
         : 'toastIn 0.35s cubic-bezier(0.22,0.61,0.36,1) forwards',
-      fontFamily: "'Inter', system-ui, sans-serif",
+      fontFamily: "'Quicksand', system-ui, sans-serif",
     }}>
       <img
         src={voiceLKIcon}

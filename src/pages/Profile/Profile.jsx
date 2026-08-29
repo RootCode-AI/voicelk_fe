@@ -67,7 +67,7 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData, 
       padding: '48px 24px',
       background: theme.bg,
       color: theme.text,
-      fontFamily: "'Inter', system-ui, sans-serif"
+      fontFamily: "'Quicksand', system-ui, sans-serif"
     }}>
       <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
         

@@ -130,7 +130,7 @@ export default function HelpView({ isDark }) {
       flex: 1, overflowY: 'auto',
       background: theme.bg,
       height: '100%',
-      fontFamily: "'Inter', system-ui, sans-serif",
+      fontFamily: "'Quicksand', system-ui, sans-serif",
     }}>
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px 60px' }}>
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2, Star, MessageSquare } from 'lucide-react';
-import { api, friendlyMessage } from '../../services/api';
+import { api, friendlyMessage, ApiError } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -24,7 +24,6 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [feedbackId, setFeedbackId] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showError } = useError();
@@ -34,17 +33,20 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
     api.get(`/api/feedbacks/audio/${audioId}`)
       .then(res => {
         if (res.feedbackId) {
-          setFeedbackId(res.feedbackId);
           setRating(res.rating);
           setComment(res.comment || '');
           setIsSaved(true);
         }
       })
-      .catch(() => {}); // 404 means no feedback yet, perfectly fine
+      .catch(err => {
+        if (err instanceof ApiError && err.status === 404) return; // no feedback yet, perfectly fine
+        console.error('[FeedbackWidget] Failed to load feedback:', err);
+        showError(friendlyMessage(err), 'error');
+      });
   }, [audioId, userId]);
 
   const handleSubmit = async () => {
-    if (rating === 0) return;
+    if (rating === 0 || isSaved) return; // feedback can only be submitted once
     setIsSubmitting(true);
     try {
       const payload = {
@@ -54,18 +56,13 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
         audio: { audioId }
       };
 
-      if (feedbackId) {
-        await api.put(`/api/feedbacks/${feedbackId}`, payload);
-        showError('Feedback updated!', 'success', { duration: 2000 });
-      } else {
-        const res = await api.post('/api/feedbacks', payload);
-        setFeedbackId(res.feedbackId);
-        showError('Thank you for your feedback!', 'success', { duration: 2000 });
-      }
+      await api.post('/api/feedbacks', payload);
+      showError('Thank you for your feedback!', 'success', { duration: 2000 });
       setIsSaved(true);
       setIsExpanded(false);
     } catch (err) {
-      showError('Failed to save feedback');
+      console.error('[FeedbackWidget] Failed to save feedback:', err);
+      showError(friendlyMessage(err), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -73,28 +70,33 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
 
   if (!userId || userRole === 'GUEST') return null; // Guest users can't leave feedback
 
+  const isEditing = !isSaved && (isExpanded || rating > 0);
+
   return (
     <div style={{
       marginTop: 10,
+      display: 'inline-block',
+      width: isEditing ? 280 : 'auto',
       background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
       borderRadius: 12,
-      padding: '10px 14px',
+      padding: '8px 10px',
       border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'}`,
-      maxWidth: 400
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 4 }}>
           {[1, 2, 3, 4, 5].map(star => (
             <button
               key={star}
-              onMouseEnter={() => setHoverRating(star)}
-              onMouseLeave={() => setHoverRating(0)}
+              disabled={isSaved}
+              onMouseEnter={() => !isSaved && setHoverRating(star)}
+              onMouseLeave={() => !isSaved && setHoverRating(0)}
               onClick={() => {
+                if (isSaved) return;
                 setRating(star);
                 setIsExpanded(true);
               }}
               style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+                background: 'none', border: 'none', cursor: isSaved ? 'default' : 'pointer', padding: 2,
                 color: (hoverRating || rating) >= star ? '#fbbf24' : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'),
                 transition: 'color 0.2s, transform 0.1s',
                 transform: hoverRating === star ? 'scale(1.15)' : 'scale(1)'
@@ -105,15 +107,9 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
             </button>
           ))}
         </div>
-        
-        {isSaved && !isExpanded && (
-          <span style={{ fontSize: 12, color: isDark ? '#10b981' : '#059669', fontWeight: 500 }}>
-            Feedback Saved
-          </span>
-        )}
       </div>
 
-      {(isExpanded || (rating > 0 && !isSaved)) && (
+      {isEditing && (
         <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10, animation: 'fadeIn 0.2s ease' }}>
           <div style={{ position: 'relative' }}>
             <MessageSquare size={14} style={{ position: 'absolute', top: 10, left: 10, color: isDark ? '#9ca3af' : '#6b7280' }} />
@@ -138,10 +134,7 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <button
-              onClick={() => {
-                if (isSaved) setIsExpanded(false);
-                else setRating(0); // Cancel
-              }}
+              onClick={() => setRating(0)}
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -153,7 +146,7 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
                 borderRadius: 4
               }}
             >
-              {isSaved ? 'Close' : 'Cancel'}
+              Cancel
             </button>
             <button
               onClick={handleSubmit}
@@ -170,7 +163,7 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
                 transition: 'background 0.2s'
               }}
             >
-              {isSubmitting ? 'Saving...' : (feedbackId ? 'Update' : 'Submit')}
+              {isSubmitting ? 'Saving...' : 'Submit'}
             </button>
           </div>
         </div>
@@ -681,7 +674,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
         position: 'absolute', bottom: 0, left: 0, right: 0,
         padding: '12px 16px',
         background: `linear-gradient(to bottom, transparent, ${t.pageBg} 20%)`,
-        display: 'flex', justifyContent: 'center'
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8
       }}>
         <form
           onSubmit={handleSend}
@@ -733,6 +726,13 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
             <Send size={20} strokeWidth={2.5} />
           </button>
         </form>
+
+        <p style={{
+          margin: 0, fontSize: 12, textAlign: 'center',
+          color: isDark ? '#64748b' : '#9ca3af'
+        }}>
+          VoiceLK can make mistakes. Double check it.
+        </p>
       </div>
 
     </div>

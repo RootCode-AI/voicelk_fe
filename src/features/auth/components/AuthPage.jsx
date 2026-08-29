@@ -358,7 +358,7 @@ export default function AuthPage({ onLogin }) {
           alignItems: 'center',
           justifyContent: 'center',
           padding: 16,
-          fontFamily: "'Inter', system-ui, sans-serif",
+          fontFamily: "'Quicksand', system-ui, sans-serif",
           position: 'relative',
           overflow: 'hidden',
           ...pageStyle,
