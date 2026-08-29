@@ -435,7 +435,7 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
       <div style={{
         display: 'flex', height: '100vh', width: '100vw',
         overflow: 'hidden',
-        fontFamily: "'Inter', system-ui, sans-serif",
+        fontFamily: "'Quicksand', system-ui, sans-serif",
         background: t.pageBg,
       }}>
 

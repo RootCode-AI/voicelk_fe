@@ -26,7 +26,7 @@ export default class ErrorBoundary extends Component {
     return (
       <div style={{
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 40, fontFamily: "'Inter', system-ui, sans-serif",
+        padding: 40, fontFamily: "'Quicksand', system-ui, sans-serif",
       }}>
         <div style={{
           maxWidth: 480, width: '100%', textAlign: 'center',

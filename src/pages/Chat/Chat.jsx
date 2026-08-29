@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2, Star, MessageSquare } from 'lucide-react';
-import { api, friendlyMessage } from '../../services/api';
+import { api, friendlyMessage, ApiError } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -24,7 +24,6 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [feedbackId, setFeedbackId] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showError } = useError();
@@ -34,17 +33,20 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
     api.get(`/api/feedbacks/audio/${audioId}`)
       .then(res => {
         if (res.feedbackId) {
-          setFeedbackId(res.feedbackId);
           setRating(res.rating);
           setComment(res.comment || '');
           setIsSaved(true);
         }
       })
-      .catch(() => {}); // 404 means no feedback yet, perfectly fine
+      .catch(err => {
+        if (err instanceof ApiError && err.status === 404) return; // no feedback yet, perfectly fine
+        console.error('[FeedbackWidget] Failed to load feedback:', err);
+        showError(friendlyMessage(err), 'error');
+      });
   }, [audioId, userId]);
 
   const handleSubmit = async () => {
-    if (rating === 0) return;
+    if (rating === 0 || isSaved) return; // feedback can only be submitted once
     setIsSubmitting(true);
     try {
       const payload = {
@@ -54,18 +56,13 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
         audio: { audioId }
       };
 
-      if (feedbackId) {
-        await api.put(`/api/feedbacks/${feedbackId}`, payload);
-        showError('Feedback updated!', 'success', { duration: 2000 });
-      } else {
-        const res = await api.post('/api/feedbacks', payload);
-        setFeedbackId(res.feedbackId);
-        showError('Thank you for your feedback!', 'success', { duration: 2000 });
-      }
+      await api.post('/api/feedbacks', payload);
+      showError('Thank you for your feedback!', 'success', { duration: 2000 });
       setIsSaved(true);
       setIsExpanded(false);
     } catch (err) {
-      showError('Failed to save feedback');
+      console.error('[FeedbackWidget] Failed to save feedback:', err);
+      showError(friendlyMessage(err), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -73,28 +70,33 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
 
   if (!userId || userRole === 'GUEST') return null; // Guest users can't leave feedback
 
+  const isEditing = !isSaved && (isExpanded || rating > 0);
+
   return (
     <div style={{
       marginTop: 10,
+      display: 'inline-block',
+      width: isEditing ? 280 : 'auto',
       background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
       borderRadius: 12,
-      padding: '10px 14px',
+      padding: '8px 10px',
       border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'}`,
-      maxWidth: 400
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 4 }}>
           {[1, 2, 3, 4, 5].map(star => (
             <button
               key={star}
-              onMouseEnter={() => setHoverRating(star)}
-              onMouseLeave={() => setHoverRating(0)}
+              disabled={isSaved}
+              onMouseEnter={() => !isSaved && setHoverRating(star)}
+              onMouseLeave={() => !isSaved && setHoverRating(0)}
               onClick={() => {
+                if (isSaved) return;
                 setRating(star);
                 setIsExpanded(true);
               }}
               style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: 2,
+                background: 'none', border: 'none', cursor: isSaved ? 'default' : 'pointer', padding: 2,
                 color: (hoverRating || rating) >= star ? '#fbbf24' : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'),
                 transition: 'color 0.2s, transform 0.1s',
                 transform: hoverRating === star ? 'scale(1.15)' : 'scale(1)'
@@ -105,15 +107,9 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
             </button>
           ))}
         </div>
-        
-        {isSaved && !isExpanded && (
-          <span style={{ fontSize: 12, color: isDark ? '#10b981' : '#059669', fontWeight: 500 }}>
-            Feedback Saved
-          </span>
-        )}
       </div>
 
-      {(isExpanded || (rating > 0 && !isSaved)) && (
+      {isEditing && (
         <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10, animation: 'fadeIn 0.2s ease' }}>
           <div style={{ position: 'relative' }}>
             <MessageSquare size={14} style={{ position: 'absolute', top: 10, left: 10, color: isDark ? '#9ca3af' : '#6b7280' }} />
@@ -138,10 +134,7 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <button
-              onClick={() => {
-                if (isSaved) setIsExpanded(false);
-                else setRating(0); // Cancel
-              }}
+              onClick={() => setRating(0)}
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -153,7 +146,7 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
                 borderRadius: 4
               }}
             >
-              {isSaved ? 'Close' : 'Cancel'}
+              Cancel
             </button>
             <button
               onClick={handleSubmit}
@@ -170,7 +163,7 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
                 transition: 'background 0.2s'
               }}
             >
-              {isSubmitting ? 'Saving...' : (feedbackId ? 'Update' : 'Submit')}
+              {isSubmitting ? 'Saving...' : 'Submit'}
             </button>
           </div>
         </div>
@@ -461,6 +454,43 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
     scrollToBottom();
   }, [messages]);
 
+  // Active typewriter intervals, keyed by message id, so they can be cleared on unmount.
+  const typingTimersRef = useRef({});
+
+  useEffect(() => {
+    return () => {
+      Object.values(typingTimersRef.current).forEach(clearInterval);
+    };
+  }, []);
+
+  // Reveal a full response gradually, chat-bot style, instead of dumping it in all at once.
+  const typeOutMessage = useCallback((msgId, fullText) => {
+    clearInterval(typingTimersRef.current[msgId]);
+
+    if (!fullText) {
+      setMessages(prev => prev.map(msg =>
+        msg.id === msgId ? { ...msg, content: '', isTyping: false } : msg
+      ));
+      return;
+    }
+
+    let i = 0;
+    const chunkSize = 3; // characters revealed per tick
+    const timer = setInterval(() => {
+      i = Math.min(i + chunkSize, fullText.length);
+      const done = i >= fullText.length;
+      setMessages(prev => prev.map(msg =>
+        msg.id === msgId ? { ...msg, content: fullText.slice(0, i), isTyping: !done } : msg
+      ));
+      if (done) {
+        clearInterval(timer);
+        delete typingTimersRef.current[msgId];
+      }
+    }, 20);
+
+    typingTimersRef.current[msgId] = timer;
+  }, []);
+
   // Fetch audio metadata for an answer and update the message (with polling)
   const fetchAudioForMessage = useCallback((msgId, answerId, attempt = 1) => {
     if (!answerId) return;
@@ -515,13 +545,15 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       });
       console.log('[ChatView] Response:', data);
 
-      // Replace thinking bubble with real response
+      // Replace thinking bubble with the real response, revealed gradually
+      const responseText = data.responseText || 'No response received.';
       setMessages(prev => prev.map(msg =>
         msg.id === thinkingId
           ? {
               ...msg,
-              content: data.responseText || 'No response received.',
+              content: '',
               isThinking: false,
+              isTyping: true,
               answerId: data.answerId,
               audioId: data.audioId || null,
               audioDuration: data.audioDuration || null,
@@ -529,6 +561,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
             }
           : msg
       ));
+      typeOutMessage(thinkingId, responseText);
 
       // If the backend didn't return audioId directly, try fetching it
       if (!data.audioId && data.answerId) {
@@ -601,6 +634,9 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
         }
+        @keyframes blinkCursor {
+          50% { opacity: 0; }
+        }
       `}</style>
       
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 90px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -613,34 +649,54 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
             }}>
               {msg.type === 'ai' && (
                 <div style={{
-                  width: 32, height: 32, borderRadius: '50%', background: '#3b82f6',
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+                  boxShadow: '0 3px 10px rgba(59,130,246,0.35)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0, marginRight: 12, marginTop: 4
                 }}>
                   <Bot size={18} color="#ffffff" />
                 </div>
               )}
-              
+
               <div style={{
-                maxWidth: '90%',
-                background: msg.type === 'user' ? (isDark ? '#1e293b' : '#f3f4f6') : 'transparent',
+                maxWidth: msg.type === 'user' ? '90%' : 640,
+                background: msg.type === 'user'
+                  ? (isDark ? '#1e293b' : '#f3f4f6')
+                  : (isDark ? 'rgba(255,255,255,0.04)' : '#ffffff'),
                 color: msg.isError
                   ? (isDark ? '#fca5a5' : '#dc2626')
                   : msg.type === 'user'
                     ? (isDark ? '#f8fafc' : '#111827')
                     : (isDark ? '#f1f5f9' : '#1f2937'),
-                padding: msg.type === 'user' ? '10px 16px' : '0',
-                borderRadius: msg.type === 'user' ? 20 : 0,
+                padding: msg.type === 'user' ? '10px 16px' : '14px 18px',
+                borderRadius: msg.type === 'user' ? 20 : '4px 16px 16px 16px',
+                border: msg.type === 'ai'
+                  ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}`
+                  : 'none',
+                boxShadow: msg.type === 'ai'
+                  ? (isDark ? '0 2px 12px rgba(0,0,0,0.25)' : '0 2px 12px rgba(15,23,42,0.05)')
+                  : 'none',
                 fontSize: 14.5,
-                lineHeight: 1.6,
+                lineHeight: 1.7,
                 fontWeight: msg.type === 'user' ? 500 : 400
               }}>
                 {msg.isThinking ? (
                   <ThinkingBubble isDark={isDark} />
                 ) : (
-                  renderRichText(msg.content)
+                  <>
+                    {renderRichText(msg.content)}
+                    {msg.isTyping && (
+                      <span style={{
+                        display: 'inline-block', width: 2, height: 15,
+                        marginLeft: 2, verticalAlign: 'text-bottom',
+                        background: isDark ? '#38bdf8' : '#3b82f6',
+                        animation: 'blinkCursor 0.8s step-end infinite'
+                      }} />
+                    )}
+                  </>
                 )}
-                
+
                 {msg.isAudioLoading && !msg.audioId && (
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 8,
@@ -681,7 +737,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
         position: 'absolute', bottom: 0, left: 0, right: 0,
         padding: '12px 16px',
         background: `linear-gradient(to bottom, transparent, ${t.pageBg} 20%)`,
-        display: 'flex', justifyContent: 'center'
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8
       }}>
         <form
           onSubmit={handleSend}
@@ -733,6 +789,13 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
             <Send size={20} strokeWidth={2.5} />
           </button>
         </form>
+
+        <p style={{
+          margin: 0, fontSize: 12, textAlign: 'center',
+          color: isDark ? '#64748b' : '#9ca3af'
+        }}>
+          VoiceLK can make mistakes. Double check it.
+        </p>
       </div>
 
     </div>
