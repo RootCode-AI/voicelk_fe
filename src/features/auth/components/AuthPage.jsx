@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import voiceLKIcon from '../assets/voicelk-icon.png';
+import voiceLKIcon from '../../../assets/images/voicelk-icon.png';
 import { Mail, Lock, User, Eye, EyeOff, Mic2, Loader2 } from 'lucide-react';
-import { api, friendlyMessage } from '../utils/api';
-import { useError } from '../context/ErrorContext';
+import { api, friendlyMessage } from '../../../services/api';
+import { useError } from '../../../context/ErrorContext';
 import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '../utils/firebase';
+import { auth, googleProvider } from '../../../services/firebase';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">

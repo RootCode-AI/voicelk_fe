@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Moon, Sun, Monitor, Trash2, Download, Shield, Volume2 } from 'lucide-react';
-import { api } from '../utils/api';
-import { useError } from '../context/ErrorContext';
+import { api } from '../../services/api';
+import { useError } from '../../context/ErrorContext';
 
 export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const { showError } = useError();

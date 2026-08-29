@@ -10,13 +10,13 @@ import {
   LogIn,
   LogOut,
 } from 'lucide-react';
-import voiceLKIcon from '../assets/voicelk-icon.png';
-import HomeView from './HomeView';
-import ProfileView from './ProfileView';
-import ChatView from './ChatView';
-import HistoryView from './HistoryView';
-import HelpView from './HelpView';
-import SettingsView from './SettingsView';
+import voiceLKIcon from '../../../assets/images/voicelk-icon.png';
+import HomeView from '../../../pages/Home/Home';
+import ProfileView from '../../../pages/Profile/Profile';
+import ChatView from '../../../pages/Chat/Chat';
+import HistoryView from '../../../pages/History/History';
+import HelpView from '../../../pages/Help/Help';
+import SettingsView from '../../../pages/Settings/Settings';
 
 const LIGHT = {
   pageBg: '#f0f4fa',
