@@ -3,25 +3,35 @@ import { api, friendlyMessage } from '../../services/api';
 import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut } from 'lucide-react';
 import { useError } from '../../context/ErrorContext';
 
-export default function ProfileView({ isDark, onToggleDark, onLogout, userData }) {
-  const [user, setUser] = useState({
-    fullName: userData?.email?.split('@')[0] || '',
-    email: userData?.email || '',
-    avatar: ''
+export default function ProfileView({ isDark, onToggleDark, onLogout, userData, cache, onCacheUpdate }) {
+  const [user, setUser] = useState(() => {
+    if (cache?.userId === userData?.userId) return cache.data;
+    return {
+      fullName: userData?.email?.split('@')[0] || '',
+      email: userData?.email || '',
+      avatar: ''
+    };
   });
-  
+
   const { showError } = useError();
 
   useEffect(() => {
     if (userData && userData.userId) {
+      if (cache?.userId === userData.userId) {
+        setUser(cache.data);
+        return;
+      }
+
       api.get(`/api/reg/${userData.userId}`)
         .then(data => {
           if (data) {
-            setUser({
+            const mapped = {
               fullName: data.userName || data.email?.split('@')[0] || '',
               email: data.email || '',
               avatar: data.profilePicture || ''
-            });
+            };
+            setUser(mapped);
+            onCacheUpdate?.({ userId: userData.userId, data: mapped });
           }
         })
         .catch(err => {
