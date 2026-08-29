@@ -454,6 +454,43 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
     scrollToBottom();
   }, [messages]);
 
+  // Active typewriter intervals, keyed by message id, so they can be cleared on unmount.
+  const typingTimersRef = useRef({});
+
+  useEffect(() => {
+    return () => {
+      Object.values(typingTimersRef.current).forEach(clearInterval);
+    };
+  }, []);
+
+  // Reveal a full response gradually, chat-bot style, instead of dumping it in all at once.
+  const typeOutMessage = useCallback((msgId, fullText) => {
+    clearInterval(typingTimersRef.current[msgId]);
+
+    if (!fullText) {
+      setMessages(prev => prev.map(msg =>
+        msg.id === msgId ? { ...msg, content: '', isTyping: false } : msg
+      ));
+      return;
+    }
+
+    let i = 0;
+    const chunkSize = 3; // characters revealed per tick
+    const timer = setInterval(() => {
+      i = Math.min(i + chunkSize, fullText.length);
+      const done = i >= fullText.length;
+      setMessages(prev => prev.map(msg =>
+        msg.id === msgId ? { ...msg, content: fullText.slice(0, i), isTyping: !done } : msg
+      ));
+      if (done) {
+        clearInterval(timer);
+        delete typingTimersRef.current[msgId];
+      }
+    }, 20);
+
+    typingTimersRef.current[msgId] = timer;
+  }, []);
+
   // Fetch audio metadata for an answer and update the message (with polling)
   const fetchAudioForMessage = useCallback((msgId, answerId, attempt = 1) => {
     if (!answerId) return;
@@ -508,13 +545,15 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       });
       console.log('[ChatView] Response:', data);
 
-      // Replace thinking bubble with real response
+      // Replace thinking bubble with the real response, revealed gradually
+      const responseText = data.responseText || 'No response received.';
       setMessages(prev => prev.map(msg =>
         msg.id === thinkingId
           ? {
               ...msg,
-              content: data.responseText || 'No response received.',
+              content: '',
               isThinking: false,
+              isTyping: true,
               answerId: data.answerId,
               audioId: data.audioId || null,
               audioDuration: data.audioDuration || null,
@@ -522,6 +561,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
             }
           : msg
       ));
+      typeOutMessage(thinkingId, responseText);
 
       // If the backend didn't return audioId directly, try fetching it
       if (!data.audioId && data.answerId) {
@@ -594,6 +634,9 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
         }
+        @keyframes blinkCursor {
+          50% { opacity: 0; }
+        }
       `}</style>
       
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 90px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -606,34 +649,54 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
             }}>
               {msg.type === 'ai' && (
                 <div style={{
-                  width: 32, height: 32, borderRadius: '50%', background: '#3b82f6',
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+                  boxShadow: '0 3px 10px rgba(59,130,246,0.35)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0, marginRight: 12, marginTop: 4
                 }}>
                   <Bot size={18} color="#ffffff" />
                 </div>
               )}
-              
+
               <div style={{
-                maxWidth: '90%',
-                background: msg.type === 'user' ? (isDark ? '#1e293b' : '#f3f4f6') : 'transparent',
+                maxWidth: msg.type === 'user' ? '90%' : 640,
+                background: msg.type === 'user'
+                  ? (isDark ? '#1e293b' : '#f3f4f6')
+                  : (isDark ? 'rgba(255,255,255,0.04)' : '#ffffff'),
                 color: msg.isError
                   ? (isDark ? '#fca5a5' : '#dc2626')
                   : msg.type === 'user'
                     ? (isDark ? '#f8fafc' : '#111827')
                     : (isDark ? '#f1f5f9' : '#1f2937'),
-                padding: msg.type === 'user' ? '10px 16px' : '0',
-                borderRadius: msg.type === 'user' ? 20 : 0,
+                padding: msg.type === 'user' ? '10px 16px' : '14px 18px',
+                borderRadius: msg.type === 'user' ? 20 : '4px 16px 16px 16px',
+                border: msg.type === 'ai'
+                  ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}`
+                  : 'none',
+                boxShadow: msg.type === 'ai'
+                  ? (isDark ? '0 2px 12px rgba(0,0,0,0.25)' : '0 2px 12px rgba(15,23,42,0.05)')
+                  : 'none',
                 fontSize: 14.5,
-                lineHeight: 1.6,
+                lineHeight: 1.7,
                 fontWeight: msg.type === 'user' ? 500 : 400
               }}>
                 {msg.isThinking ? (
                   <ThinkingBubble isDark={isDark} />
                 ) : (
-                  renderRichText(msg.content)
+                  <>
+                    {renderRichText(msg.content)}
+                    {msg.isTyping && (
+                      <span style={{
+                        display: 'inline-block', width: 2, height: 15,
+                        marginLeft: 2, verticalAlign: 'text-bottom',
+                        background: isDark ? '#38bdf8' : '#3b82f6',
+                        animation: 'blinkCursor 0.8s step-end infinite'
+                      }} />
+                    )}
+                  </>
                 )}
-                
+
                 {msg.isAudioLoading && !msg.audioId && (
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 8,
