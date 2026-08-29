@@ -30,20 +30,26 @@ function groupByDate(items) {
   return Object.entries(groups).map(([dateLabel, items]) => ({ dateLabel, items }));
 }
 
-export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
-  const [historyGroups, setHistoryGroups] = useState([]);
+export default function HistoryView({ isDark, userData, onSelectHistoryItem, cache, onCacheUpdate }) {
+  const isCacheFresh = cache?.userId === userData?.userId;
+  const [historyItems, setHistoryItems] = useState(isCacheFresh ? cache.items : []);
   const [loading, setLoading] = useState(false);
   const { showError } = useError();
 
   useEffect(() => {
     if (!userData?.userId) return;
 
+    if (cache?.userId === userData.userId) {
+      setHistoryItems(cache.items);
+      return;
+    }
+
     setLoading(true);
 
     api.get(`/api/ask/history/${userData.userId}`)
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped = data.map(item => ({
+        const mapped = Array.isArray(data)
+          ? data.map(item => ({
             id: item.queryId,
             content: item.inputText,
             responseText: item.responseText || '',
@@ -52,11 +58,10 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
             answerId: item.answerId || null,
             audioId: item.audioId || null,
             audioDuration: item.audioDuration || null,
-          }));
-          setHistoryGroups(groupByDate(mapped));
-        } else {
-          setHistoryGroups([]);
-        }
+          }))
+          : [];
+        setHistoryItems(mapped);
+        onCacheUpdate?.({ userId: userData.userId, items: mapped });
       })
       .catch(err => {
         console.error('[HistoryView] Failed to load history:', err);
@@ -65,20 +70,19 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem }) {
       .finally(() => setLoading(false));
   }, [userData?.userId]);
 
+  const historyGroups = groupByDate(historyItems);
+
   const handleDelete = async (e, queryId) => {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this chat history?')) return;
 
     try {
       await api.delete(`/api/queries/${queryId}`);
-      // Remove from UI
-      setHistoryGroups(prevGroups => {
-        const newGroups = prevGroups.map(group => ({
-          ...group,
-          items: group.items.filter(item => item.id !== queryId)
-        })).filter(group => group.items.length > 0);
-        return newGroups;
-      });
+      const updated = historyItems.filter(item => item.id !== queryId);
+      setHistoryItems(updated);
+      if (userData?.userId) {
+        onCacheUpdate?.({ userId: userData.userId, items: updated });
+      }
     } catch (err) {
       console.error('[HistoryView] Failed to delete history:', err);
       showError(friendlyMessage(err), 'error');

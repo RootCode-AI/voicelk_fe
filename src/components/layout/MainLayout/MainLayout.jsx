@@ -384,6 +384,11 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
   const [chatInitialMessage, setChatInitialMessage] = useState('');
   const [chatInitialHistoryItem, setChatInitialHistoryItem] = useState(null);
 
+  // Cached backend responses, kept here (above the tab-driven unmount/remount
+  // of History/Profile) so switching tabs doesn't re-trigger the same fetch.
+  const [historyCache, setHistoryCache] = useState(null);
+  const [profileCache, setProfileCache] = useState(null);
+
   // Redirect away from profile if logged out
   useEffect(() => {
     if (!isAuthenticated && activeNav === 'profile') {
@@ -545,9 +550,11 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
           </div>
 
           {activeNav === 'profile' ? (
-            <ProfileView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} onLogout={onLogout} userData={userData} />
+            <ProfileView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} onLogout={onLogout} userData={userData}
+              cache={profileCache} onCacheUpdate={setProfileCache} />
           ) : activeNav === 'history' ? (
-            <HistoryView isDark={isDark} userData={userData} onSelectHistoryItem={handleSelectHistoryItem} />
+            <HistoryView isDark={isDark} userData={userData} onSelectHistoryItem={handleSelectHistoryItem}
+              cache={historyCache} onCacheUpdate={setHistoryCache} />
           ) : activeNav === 'settings' ? (
             <SettingsView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} userData={userData} t={t} />
           ) : activeNav === 'help' ? (
