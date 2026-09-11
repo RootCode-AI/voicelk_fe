@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import voiceLKIcon from '../../../assets/images/voicelk-icon.png';
 import { Mail, Lock, User, Eye, EyeOff, Mic2, Loader2 } from 'lucide-react';
 import { api, friendlyMessage } from '../../../services/api';
@@ -179,7 +179,7 @@ const InputField = ({ id, label, type: initialType = 'text', icon: Icon, t, valu
   );
 };
 
-export default function AuthPage({ onLogin }) {
+export default function AuthPage({ onLogin, isDark = false }) {
   const [isLogin, setIsLogin] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
   const [fading, setFading] = useState(false);
@@ -194,16 +194,6 @@ export default function AuthPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { showError } = useError();
-
-  const [isDark, setIsDark] = useState(
-    () => window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e) => setIsDark(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
 
   const t = isDark ? DARK : LIGHT;
 

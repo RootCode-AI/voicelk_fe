@@ -56,8 +56,6 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData, 
     setLanguageState(value);
     if (hasConsent) {
       setCookie('vlk_language', value);
-    } else {
-      showError('Accept cookies to keep this preference for your next visit.', 'info');
     }
   };
 
