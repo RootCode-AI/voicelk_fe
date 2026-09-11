@@ -5,12 +5,14 @@ import {
   Settings,
   HelpCircle,
   PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Bell,
   LogIn,
   LogOut,
 } from 'lucide-react';
 import voiceLKIcon from '../../../assets/images/voicelk-icon.png';
+import { api } from '../../../services/api';
 import HomeView from '../../../pages/Home/Home';
 import ProfileView from '../../../pages/Profile/Profile';
 import ChatView from '../../../pages/Chat/Chat';
@@ -130,6 +132,62 @@ function IconBtn({ onClick, title, children, t, style = {} }) {
   );
 }
 
+// When a click swaps the DOM under a stationary cursor (e.g. closing the
+// sidebar mounts a different button right where the pointer already sits),
+// browsers re-fire mouseenter on the new element with no real mouse motion.
+// This flag makes tooltips ignore that "phantom" hover until the pointer
+// actually moves, so a tooltip only reappears once the user re-hovers it.
+let vlkSuppressTooltipHover = false;
+function vlkArmTooltipSuppression() {
+  vlkSuppressTooltipHover = true;
+  const clear = () => {
+    vlkSuppressTooltipHover = false;
+    window.removeEventListener('mousemove', clear);
+  };
+  window.addEventListener('mousemove', clear);
+}
+
+function Tooltip({ label, children, pos = 'right' }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span
+      className="vlk-tt-wrap"
+      onMouseEnter={() => { if (!vlkSuppressTooltipHover) setShow(true); }}
+      onMouseLeave={() => setShow(false)}
+      onClickCapture={() => { setShow(false); vlkArmTooltipSuppression(); }}
+    >
+      {children}
+      <span className={`vlk-tt-bubble${show ? ' vlk-tt-show' : ''}`} data-pos={pos}>{label}</span>
+    </span>
+  );
+}
+
+function AvatarCircle({ src, label, size, gradient, textColor, fontSize }) {
+  const [errored, setErrored] = useState(false);
+
+  if (src && !errored) {
+    return (
+      <img
+        src={src}
+        alt="User avatar"
+        onError={() => setErrored(true)}
+        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+      />
+    );
+  }
+
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', flexShrink: 0,
+      background: gradient,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize, fontWeight: 700, color: textColor,
+    }}>
+      {label}
+    </div>
+  );
+}
+
 function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
   const isDark = t.pageBg === '#060f1e';
   const activeBg = isDark ? 'rgba(16, 185, 129, 0.15)' : '#ccfbf1';
@@ -139,25 +197,26 @@ function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
   if (!full) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-        <button
-          onClick={onClick}
-          title={label}
-          style={{
-            width: 36, height: 36,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            borderRadius: '50%',
-            border: 'none',
-            background: isActive ? activeBg : 'transparent',
-            cursor: 'pointer',
-            transition: 'background 0.16s',
-            flexShrink: 0,
-          }}
-          onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = t.navBgHover; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? activeBg : 'transparent'; }}
-        >
-          <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8}
-            style={{ color: isActive ? activeIcon : t.navIconColor }} />
-        </button>
+        <Tooltip label={label}>
+          <button
+            onClick={onClick}
+            style={{
+              width: 36, height: 36,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: '50%',
+              border: 'none',
+              background: isActive ? activeBg : 'transparent',
+              cursor: 'pointer',
+              transition: 'background 0.16s',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = t.navBgHover; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? activeBg : 'transparent'; }}
+          >
+            <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8}
+              style={{ color: isActive ? activeIcon : t.navIconColor }} />
+          </button>
+        </Tooltip>
       </div>
     );
   }
@@ -189,6 +248,8 @@ function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
 }
 
 function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat, isAuthenticated }) {
+  const [logoHover, setLogoHover] = useState(false);
+
   return (
     <div style={{
       width: 52, minWidth: 52,
@@ -203,24 +264,40 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat, 
       flexShrink: 0,
       zIndex: 20,
     }}>
-      <button
-        onClick={() => { if (onNewChat) onNewChat(); else setActiveNav('new_chat'); }}
-        title="Open Chat"
-        style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          padding: '4px 0 10px', lineHeight: 0,
-          transition: 'opacity 0.15s',
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.7')}
-        onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-      >
-        <img src={voiceLKIcon} alt="VoiceLK"
-          style={{ width: 26, height: 26, objectFit: 'contain' }} />
-      </button>
+      <Tooltip label="Open sidebar">
+        <button
+          onClick={() => { if (onLogoClick) onLogoClick(); }}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            padding: '4px 0 10px', lineHeight: 0,
+          }}
+          onMouseEnter={() => setLogoHover(true)}
+          onMouseLeave={() => setLogoHover(false)}
+        >
+          <span style={{ width: 26, height: 26, position: 'relative', display: 'block' }}>
+            <img src={voiceLKIcon} alt="VoiceLK"
+              style={{
+                position: 'absolute', inset: 0, width: 26, height: 26, objectFit: 'contain',
+                opacity: logoHover ? 0 : 1,
+                transform: logoHover ? 'scale(0.82) translateX(2px)' : 'scale(1) translateX(0)',
+                transition: 'opacity 0.16s ease, transform 0.16s ease',
+              }} />
+            <span style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              opacity: logoHover ? 1 : 0,
+              transform: logoHover ? 'scale(1) translateX(0)' : 'scale(0.82) translateX(-3px)',
+              transition: 'opacity 0.16s ease, transform 0.16s ease',
+            }}>
+              <PanelLeftOpen size={20} strokeWidth={1.8} color={t.navIconColor} />
+            </span>
+          </span>
+        </button>
+      </Tooltip>
 
+      <Tooltip label="New Chat">
       <button
         onClick={() => { if (onNewChat) onNewChat(); else setActiveNav('new_chat'); }}
-        title="New Chat"
         style={{
           width: 36, height: 36,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -236,6 +313,7 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat, 
       >
         <Plus size={16} strokeWidth={2.5} />
       </button>
+      </Tooltip>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', padding: '0 6px', marginTop: 2 }}>
         {NAV_TOP.filter(item => isAuthenticated || item.id !== 'profile').map(({ id, label, Icon }) => (
@@ -291,25 +369,27 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
           </span>
         </div>
 
-        <button
-          onClick={onClose}
-          title="Close sidebar"
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: t.topbarIcon, lineHeight: 0, padding: 6, borderRadius: 8,
-            transition: 'background 0.15s, color 0.15s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = t.closeBtnHoverBg;
-            e.currentTarget.style.color = t.topbarIconHover;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = t.topbarIcon;
-          }}
-        >
-          <PanelLeftClose size={19} strokeWidth={1.8} />
-        </button>
+        <Tooltip label="Close sidebar">
+          <button
+            className="vlk-panel-toggle-btn"
+            onClick={onClose}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: t.topbarIcon, lineHeight: 0, padding: 6, borderRadius: 8,
+              transition: 'background 0.15s, color 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = t.closeBtnHoverBg;
+              e.currentTarget.style.color = t.topbarIconHover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = t.topbarIcon;
+            }}
+          >
+            <PanelLeftClose size={19} strokeWidth={1.8} />
+          </button>
+        </Tooltip>
       </div>
 
       <button
@@ -386,6 +466,37 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
   // data caches itself via useUserProfile instead.
   const [historyCache, setHistoryCache] = useState(null);
 
+  // Fetch the real profile (name + Google/uploaded avatar) as soon as we're
+  // authenticated, not just when the user opens the Profile tab, so the
+  // topbar shows the same picture/name right away instead of an email-derived guess.
+  useEffect(() => {
+    if (!isAuthenticated || !userData?.userId) return;
+    if (profileCache?.userId === userData.userId) return;
+
+    let cancelled = false;
+    api.get(`/api/reg/${userData.userId}`)
+      .then(data => {
+        if (cancelled || !data) return;
+        setProfileCache({
+          userId: userData.userId,
+          data: {
+            fullName: data.userName || data.email?.split('@')[0] || '',
+            email: data.email || '',
+            avatar: data.profilePicture || ''
+          }
+        });
+      })
+      .catch(err => console.error('Failed to sync profile for topbar', err));
+    return () => { cancelled = true; };
+  }, [isAuthenticated, userData?.userId]);
+
+  const activeProfile = (profileCache && userData && profileCache.userId === userData.userId)
+    ? profileCache.data
+    : null;
+  const displayName = activeProfile?.fullName || userData?.userName || '';
+  const displayAvatar = activeProfile?.avatar || userData?.avatar || '';
+
+  // Restore the last visited tab across refreshes instead of always snapping back to home.
   useEffect(() => {
     try {
       sessionStorage.setItem('vlk_active_nav', activeNav);
@@ -417,6 +528,17 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
     setActiveNav('chat');
   };
 
+  // Reopening from the collapsed rail should restore the persistent sidebar
+  // (so it stays open across nav clicks) on desktop widths; on narrow/mobile
+  // widths the persistent panel is CSS-hidden, so fall back to the drawer.
+  const handleOpenSidebar = () => {
+    if (window.innerWidth > 768) {
+      setExpanded(true);
+    } else {
+      setDrawerOpen(true);
+    }
+  };
+
   const t = isDark ? DARK : LIGHT;
 
   return (
@@ -433,6 +555,44 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
         }
+        .vlk-tt-wrap { position: relative; display: inline-flex; }
+        .vlk-tt-bubble {
+          position: absolute;
+          left: calc(100% + 12px);
+          top: 50%;
+          transform: translateY(-50%) translateX(-4px);
+          background: ${isDark ? '#f1f5f9' : '#111827'};
+          color: ${isDark ? '#0f172a' : '#ffffff'};
+          font-size: 12.5px;
+          font-weight: 600;
+          font-family: 'Quicksand', system-ui, sans-serif;
+          padding: 6px 13px;
+          border-radius: 9999px;
+          white-space: nowrap;
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transition: opacity 0.1s ease, transform 0.1s ease;
+          transition-delay: 0s;
+          z-index: 100;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+        }
+        .vlk-tt-bubble.vlk-tt-show {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(-50%) translateX(0);
+        }
+        .vlk-tt-bubble[data-pos="bottom-end"] {
+          left: auto;
+          right: 0;
+          top: calc(100% + 8px);
+          transform: translateY(-6px);
+        }
+        .vlk-tt-bubble[data-pos="bottom-end"].vlk-tt-show {
+          transform: translateY(0);
+        }
+        .vlk-panel-toggle-btn svg { transition: transform 0.18s ease; }
+        .vlk-panel-toggle-btn:hover svg { transform: translateX(-2px); }
       `}</style>
 
       <div style={{
@@ -448,7 +608,7 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
             height: '100vh',
             background: t.sidebarBg,
             borderRight: `1px solid ${t.sidebarBorder}`,
-            flexShrink: 0, zIndex: 20, overflow: 'hidden',
+            flexShrink: 0, zIndex: 20,
             animation: 'slideInLeft 0.22s ease',
           }}>
             <ExpandedSidebarContent
@@ -463,7 +623,7 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
         {!expanded && (
           <CollapsedSidebar
             t={t} activeNav={activeNav} setActiveNav={setActiveNav}
-            onLogoClick={() => setDrawerOpen(true)}
+            onLogoClick={handleOpenSidebar}
             onNewChat={handleNewChat}
             isAuthenticated={isAuthenticated}
           />
@@ -499,16 +659,17 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
                     onMouseEnter={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}
                     onMouseLeave={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9'}
                   >
-                    <div style={{
-                      width: 28, height: 28, borderRadius: '50%',
-                      background: t.avatarBg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 12, fontWeight: 700, color: t.avatarText,
-                    }}>
-                      {((userData?.userName || userData?.email)?.[0] || 'U').toUpperCase()}
-                    </div>
+                    <AvatarCircle
+                      key={displayAvatar || 'none'}
+                      src={displayAvatar}
+                      label={((displayName || userData?.email)?.[0] || 'U').toUpperCase()}
+                      size={28}
+                      gradient={t.avatarBg}
+                      textColor={t.avatarText}
+                      fontSize={12}
+                    />
                     <span style={{ fontSize: 13.5, fontWeight: 600, color: t.itemText }}>
-                      {userData?.userName ? userData.userName.split(' ')[0] : (userData?.email ? userData.email.split('@')[0].split(/[._+-]/)[0].replace(/^\w/, c => c.toUpperCase()) : 'User')}
+                      {displayName ? displayName.split(' ')[0] : (userData?.email ? userData.email.split('@')[0].split(/[._+-]/)[0].replace(/^\w/, c => c.toUpperCase()) : 'User')}
                     </span>
                   </div>
                 </>
@@ -562,7 +723,8 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
           ) : activeNav === 'help' ? (
             <HelpView isDark={isDark} />
           ) : activeNav === 'chat' ? (
-            <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} initialHistoryItem={chatInitialHistoryItem} userData={userData} />
+            <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} initialHistoryItem={chatInitialHistoryItem} userData={userData}
+              onHistorySync={() => setHistoryCache(null)} />
           ) : (
             <HomeView t={t} isDark={isDark} onSubmit={handleHomeSubmit} />
           )}
@@ -588,7 +750,6 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
               boxShadow: t.drawerShadow,
               zIndex: 50,
               animation: 'slideInLeft 0.22s cubic-bezier(0.22,0.61,0.36,1)',
-              overflow: 'hidden',
             }}>
               <ExpandedSidebarContent
                 t={t} activeNav={activeNav} setActiveNav={setActiveNav}

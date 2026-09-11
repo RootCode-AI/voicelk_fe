@@ -438,7 +438,7 @@ function ThinkingBubble({ isDark }) {
   );
 }
 
-export default function ChatView({ t, isDark, initialMessage = '', initialHistoryItem = null, userData }) {
+export default function ChatView({ t, isDark, initialMessage = '', initialHistoryItem = null, userData, onHistorySync }) {
   const [messages, setMessages] = useState([]);
   const [inputVal, setInputVal] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -544,6 +544,10 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
         userId: userData?.userId || '',
       });
       console.log('[ChatView] Response:', data);
+
+      // A new query was saved server-side for this user — invalidate the
+      // cached History list so it refetches instead of showing a stale/empty state.
+      if (userData?.userId && onHistorySync) onHistorySync();
 
       // Replace thinking bubble with the real response, revealed gradually
       const responseText = data.responseText || 'No response received.';

@@ -6,7 +6,7 @@ export async function apiFetch(endpoint, options = {}) {
   const url = `${BASE_URL}${endpoint}`;
 
   const headers = {
-    'Content-Type': 'application/json',
+    ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
     ...options.headers,
   };
 
@@ -53,6 +53,7 @@ export const api = {
   put:    (endpoint, body, opts = {}) => apiFetch(endpoint, { ...opts, method: 'PUT',    body: JSON.stringify(body) }),
   patch:  (endpoint, body, opts = {}) => apiFetch(endpoint, { ...opts, method: 'PATCH',  body: JSON.stringify(body) }),
   delete: (endpoint, opts = {}) => apiFetch(endpoint, { ...opts, method: 'DELETE' }),
+  upload: (endpoint, formData, opts = {}) => apiFetch(endpoint, { ...opts, method: 'POST', body: formData }),
 };
 
 export class ApiError extends Error {

@@ -26,14 +26,67 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
   };
 
   const theme = {
-    bg: isDark ? '#060f1e' : '#f8fafc',
+    bg: isDark ? '#060f1e' : '#f0f4fa',
     card: isDark ? 'rgba(12,24,48,0.9)' : '#ffffff',
     text: isDark ? '#f1f5f9' : '#111827',
     subText: isDark ? '#94a3b8' : '#6b7280',
     border: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)',
     inputBg: isDark ? 'rgba(255,255,255,0.04)' : '#f3f4f6',
     shadow: isDark ? '0 4px 24px rgba(0,0,0,0.3)' : '0 10px 40px rgba(0,0,0,0.03)',
-    iconColor: isDark ? '#38bdf8' : '#2563eb'
+    iconColor: isDark ? '#38bdf8' : '#2563eb',
+    avatarBg: isDark ? 'linear-gradient(135deg, #0891b2, #7c3aed)' : 'linear-gradient(135deg, #fbbf24, #f97316)',
+    avatarText: '#ffffff'
+  };
+
+  const avatarInitial = ((user.fullName || user.email)?.[0] || 'U').toUpperCase();
+
+  const handleAvatarButtonClick = () => {
+    if (uploadingAvatar) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showError('Please choose an image file.', 'error');
+      return;
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      showError('Image is too large. Please choose one under 5MB.', 'error');
+      return;
+    }
+    if (!userData?.userId) {
+      showError('Please log in to update your avatar.', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setUploadingAvatar(true);
+    try {
+      const data = await api.upload(`/api/reg/${userData.userId}/avatar`, formData);
+      const updated = { ...user, avatar: data.profilePicture || '' };
+      setUser(updated);
+      onCacheUpdate?.({ userId: userData.userId, data: updated });
+    } catch (err) {
+      console.error('Failed to upload avatar', err);
+      showError(friendlyMessage(err), 'error');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleLogoutClick = async () => {
+    const ok = await confirm('Are you sure you want to log out?', {
+      title: 'Log out?',
+      confirmLabel: 'Log Out',
+      cancelLabel: 'Cancel',
+    });
+    if (ok) onLogout?.();
   };
 
   return (
@@ -49,31 +102,57 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
         
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{ position: 'relative', marginBottom: 16 }}>
-            {user.avatar ? (
-              <img src={user.avatar} alt="User avatar" style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 4px 14px rgba(0,0,0,0.1)' }} />
+            {user.avatar && !avatarError ? (
+              <img
+                key={user.avatar}
+                src={user.avatar}
+                alt="User avatar"
+                onError={() => setAvatarError(true)}
+                style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 4px 14px rgba(0,0,0,0.1)' }}
+              />
             ) : (
               <div style={{
                 width: 100, height: 100, borderRadius: '50%',
-                background: isDark ? '#1e293b' : '#e2e8f0',
+                background: theme.avatarBg,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.05)'
+                boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
               }}>
-                <User size={44} color={isDark ? '#475569' : '#94a3b8'} strokeWidth={1.5} />
+                {(user.fullName || user.email) ? (
+                  <span style={{ fontSize: 40, fontWeight: 700, color: theme.avatarText }}>
+                    {avatarInitial}
+                  </span>
+                ) : (
+                  <User size={44} color="#ffffff" strokeWidth={1.5} />
+                )}
               </div>
             )}
-            <button 
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarFileChange}
+              style={{ display: 'none' }}
+            />
+            <button
               title="Edit Avatar"
+              onClick={handleAvatarButtonClick}
+              disabled={uploadingAvatar}
               style={{
                 position: 'absolute', bottom: 0, right: 0,
                 width: 30, height: 30, borderRadius: '50%',
                 background: '#2563eb', border: `3px solid ${theme.bg}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', padding: 0, transition: 'transform 0.15s'
+                cursor: uploadingAvatar ? 'not-allowed' : 'pointer', padding: 0,
+                transition: 'transform 0.15s', opacity: uploadingAvatar ? 0.7 : 1
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+              onMouseEnter={(e) => { if (!uploadingAvatar) e.currentTarget.style.transform = 'scale(1.1)'; }}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
-              <Pencil size={13} color="#ffffff" strokeWidth={2.5} />
+              {uploadingAvatar ? (
+                <Loader2 size={13} color="#ffffff" strokeWidth={2.5} className="animate-spin" />
+              ) : (
+                <Pencil size={13} color="#ffffff" strokeWidth={2.5} />
+              )}
             </button>
           </div>
           <h2 style={{ fontSize: 26, fontWeight: 700, margin: '0 0 6px 0', letterSpacing: '-0.3px' }}>
@@ -203,8 +282,8 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-          <button 
-          onClick={onLogout}
+          <button
+          onClick={handleLogoutClick}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '12px 28px', borderRadius: 9999,
