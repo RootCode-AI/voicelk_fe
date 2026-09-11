@@ -8,10 +8,28 @@ import { CookieConsentProvider, useCookieConsent } from './context/CookieConsent
 import { ConfirmProvider } from './context/ConfirmContext';
 import { getCookie, setCookie } from './utils/cookies';
 
+function loadStoredSession() {
+  try {
+    const token = localStorage.getItem('voicelk_token');
+    const storedUser = localStorage.getItem('voicelk_user');
+    if (token && storedUser) {
+      return { isAuthenticated: true, userData: JSON.parse(storedUser) };
+    }
+  } catch (_) {
+    localStorage.removeItem('voicelk_token');
+    localStorage.removeItem('voicelk_user');
+  }
+  return { isAuthenticated: false, userData: null };
+}
+
 function AppInner() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Restored synchronously (not in a useEffect) so isAuthenticated is correct
+  // on the very first render — MainLayout's child effects run before this
+  // component's effects, so an async restore would let a "redirect away from
+  // profile if logged out" guard fire while isAuthenticated is still false.
+  const [isAuthenticated, setIsAuthenticated] = useState(() => loadStoredSession().isAuthenticated);
   const [showLogin, setShowLogin] = useState(false);
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState(() => loadStoredSession().userData);
   const { showError } = useError();
   const { hasConsent } = useCookieConsent();
 
@@ -38,21 +56,6 @@ function AppInner() {
       return next;
     });
   };
-
-  // Check for existing token on mount
-  useEffect(() => {
-    const token = localStorage.getItem('voicelk_token');
-    const storedUser = localStorage.getItem('voicelk_user');
-    if (token && storedUser) {
-      try {
-        setUserData(JSON.parse(storedUser));
-        setIsAuthenticated(true);
-      } catch (_) {
-        localStorage.removeItem('voicelk_token');
-        localStorage.removeItem('voicelk_user');
-      }
-    }
-  }, []);
 
   useEffect(() => {
     const handleError = (event) => {

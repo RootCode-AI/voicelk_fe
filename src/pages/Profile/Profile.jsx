@@ -1,55 +1,21 @@
-import { useState, useEffect } from 'react';
-import { api, friendlyMessage } from '../../services/api';
+import { useState } from 'react';
 import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut } from 'lucide-react';
 import { useError } from '../../context/ErrorContext';
 import { useCookieConsent } from '../../context/CookieConsentContext';
+import { useUserProfile } from '../../hooks/useUserProfile';
 import { getCookie, setCookie } from '../../utils/cookies';
 
-export default function ProfileView({ isDark, onToggleDark, onLogout, userData, cache, onCacheUpdate }) {
-  const [user, setUser] = useState(() => {
-    if (cache?.userId === userData?.userId) return cache.data;
-    return {
-      fullName: userData?.email?.split('@')[0] || '',
-      email: userData?.email || '',
-      avatar: ''
-    };
-  });
-
+export default function ProfileView({ isDark, onToggleDark, onLogout, userData }) {
   const { showError } = useError();
   const { hasConsent } = useCookieConsent();
+  const { profile } = useUserProfile(userData?.userId, showError);
 
-  useEffect(() => {
-    if (userData && userData.userId) {
-      if (cache?.userId === userData.userId) {
-        setUser(cache.data);
-        return;
-      }
+  const user = profile || {
+    fullName: userData?.email?.split('@')[0] || '',
+    email: userData?.email || '',
+    avatar: '',
+  };
 
-      api.get(`/api/reg/${userData.userId}`)
-        .then(data => {
-          if (data) {
-            const mapped = {
-              fullName: data.userName || data.email?.split('@')[0] || '',
-              email: data.email || '',
-              avatar: data.profilePicture || ''
-            };
-            setUser(mapped);
-            onCacheUpdate?.({ userId: userData.userId, data: mapped });
-          }
-        })
-        .catch(err => {
-          console.error("Failed to fetch user profile", err);
-          showError(friendlyMessage(err), 'error');
-        });
-    } else {
-      setUser({
-        fullName: '',
-        email: '',
-        avatar: ''
-      });
-    }
-  }, [userData]);
-  
   const [language, setLanguageState] = useState(getCookie('vlk_language') || 'English');
 
   const setLanguage = (value) => {
