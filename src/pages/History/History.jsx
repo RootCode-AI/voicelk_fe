@@ -98,7 +98,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
   };
 
   const theme = {
-    bg: isDark ? '#060f1e' : '#ffffff',
+    bg: isDark ? '#060f1e' : '#f0f4fa',
     heading: isDark ? '#f1f5f9' : '#111827',
     emptyText: isDark ? '#64748b' : '#9ca3af',
     dateLabel: isDark ? '#94a3b8' : '#6b7280',

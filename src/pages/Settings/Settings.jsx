@@ -101,7 +101,11 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   );
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto' }}>
+    <div style={{
+      flex: 1,
+      height: '100%',
+      overflowY: 'auto',
+    }}>
     <div style={{
       padding: '32px 40px',
       maxWidth: 800,

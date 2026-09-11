@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Paperclip, SendHorizonal } from 'lucide-react';
+import { SendHorizonal } from 'lucide-react';
 
 export default function HomeView({ t, isDark, onSubmit }) {
   const [inputVal, setInputVal] = useState('');
@@ -58,21 +58,6 @@ export default function HomeView({ t, isDark, onSubmit }) {
           backdropFilter: isDark ? 'blur(12px)' : 'none',
         }}
       >
-        <button
-          type="button"
-          onClick={() => {}}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: t.inputIcon, lineHeight: 0, padding: 0, flexShrink: 0,
-            transition: 'color 0.15s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = t.inputIconHover)}
-          onMouseLeave={(e) => (e.currentTarget.style.color = t.inputIcon)}
-          aria-label="Attach"
-        >
-          <Paperclip size={16} strokeWidth={1.8} />
-        </button>
-
         <input
           ref={inputRef}
           id="voicelk-input"
