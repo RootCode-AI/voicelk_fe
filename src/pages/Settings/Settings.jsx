@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { useCookieConsent } from '../../context/CookieConsentContext';
 import { getCookie, setCookie } from '../../utils/cookies';
+import ConfirmDialog from '../../components/common/ConfirmDialog/ConfirmDialog';
 
 export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const { showError } = useError();
@@ -11,6 +12,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const [playbackSpeed, setPlaybackSpeed] = useState(getCookie('vlk_playback_speed') || '1.0');
   const [autoPlay, setAutoPlay] = useState(getCookie('vlk_autoplay') !== 'false');
   const [clearing, setClearing] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const colors = {
     bg: isDark ? 'rgba(30, 41, 59, 0.4)' : '#ffffff',
@@ -41,19 +43,23 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
     }
   };
 
-  const handleClearHistory = async () => {
-    if (!window.confirm("Are you sure you want to delete all your chat history? This cannot be undone.")) return;
-    
+  const handleClearHistory = () => {
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearHistory = async () => {
     setClearing(true);
     try {
       // Mocking for now as endpoint doesn't exist, but ready for implementation
       setTimeout(() => {
         showError('Chat history cleared successfully!', 'success');
         setClearing(false);
+        setShowClearConfirm(false);
       }, 1000);
     } catch (err) {
       showError('Failed to clear history');
       setClearing(false);
+      setShowClearConfirm(false);
     }
   };
 
@@ -97,13 +103,16 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   );
 
   return (
+    <>
+    <div style={{
+      flex: 1,
+      height: '100%',
+      overflowY: 'auto',
+    }}>
     <div style={{
       padding: '32px 40px',
       maxWidth: 800,
       margin: '0 auto',
-      width: '100%',
-      height: '100%',
-      overflowY: 'auto',
     }}>
       <h2 style={{ fontSize: 28, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Settings</h2>
       <p style={{ color: colors.textMuted, marginBottom: 32 }}>Manage your application preferences and account settings.</p>
@@ -240,5 +249,20 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
       {/* spacer for bottom scroll */}
       <div style={{ height: 60 }} />
     </div>
+    </div>
+
+    <ConfirmDialog
+      open={showClearConfirm}
+      isDark={isDark}
+      danger
+      title="Delete chat history?"
+      message="Are you sure you want to delete all your chat history? This action cannot be undone."
+      confirmLabel="Delete"
+      cancelLabel="Cancel"
+      loading={clearing}
+      onCancel={() => setShowClearConfirm(false)}
+      onConfirm={confirmClearHistory}
+    />
+    </>
   );
 }

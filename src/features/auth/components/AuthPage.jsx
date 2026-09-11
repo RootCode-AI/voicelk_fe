@@ -262,6 +262,7 @@ export default function AuthPage({ onLogin }) {
           userId: data.userId,
           email: data.email,
           userName: data.userName,
+          avatar: data.profilePicture,
           role: data.role,
         }));
         if (onLogin) onLogin({
@@ -269,6 +270,7 @@ export default function AuthPage({ onLogin }) {
           userId: data.userId,
           email: data.email,
           userName: data.userName,
+          avatar: data.profilePicture,
           role: data.role,
         });
       } else {
@@ -308,6 +310,7 @@ export default function AuthPage({ onLogin }) {
         userId: data.userId,
         email: data.email,
         userName: data.userName,
+        avatar: data.profilePicture,
         role: data.role,
       }));
 
@@ -316,6 +319,7 @@ export default function AuthPage({ onLogin }) {
         userId: data.userId,
         email: data.email,
         userName: data.userName,
+        avatar: data.profilePicture,
         role: data.role,
       });
 
