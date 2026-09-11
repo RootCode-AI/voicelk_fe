@@ -96,7 +96,7 @@ function AppInner() {
   };
 
   return (
-    <>
+    <ConfirmProvider isDark={isDark}>
       <ErrorBoundary>
         <MainLayout
           isAuthenticated={isAuthenticated}
@@ -139,18 +139,16 @@ function AppInner() {
         </div>
       )}
       <CookieConsentBanner />
-    </>
+    </ConfirmProvider>
   );
 }
 
 function App() {
   return (
     <ErrorProvider>
-      <ConfirmProvider>
-        <CookieConsentProvider>
-          <AppInner />
-        </CookieConsentProvider>
-      </ConfirmProvider>
+      <CookieConsentProvider>
+        <AppInner />
+      </CookieConsentProvider>
     </ErrorProvider>
   );
 }

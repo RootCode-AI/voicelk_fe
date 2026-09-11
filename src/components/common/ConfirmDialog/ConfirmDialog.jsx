@@ -110,25 +110,27 @@ export default function ConfirmDialog({
           animation: 'vlkConfirmPopIn 0.18s cubic-bezier(0.22,0.61,0.36,1)',
         }}
       >
-        <div style={{
-          width: 48, height: 48, borderRadius: 14,
-          background: iconBg,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: 16,
-        }}>
-          <Icon size={22} color={iconColor} strokeWidth={2} style={{ transform: danger ? 'translateX(0.5px)' : 'translateX(4px)' }} />
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 22 }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 14, flexShrink: 0,
+            background: iconBg,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon size={20} color={iconColor} strokeWidth={2} style={{ transform: danger ? 'translateX(0.5px)' : 'translateX(3.5px)' }} />
+          </div>
+          <div>
+            {title && (
+              <h3 style={{ margin: '0 0 4px 0', fontSize: 16, fontWeight: 700, color: t.title }}>
+                {title}
+              </h3>
+            )}
+            <p style={{ margin: 0, fontSize: 13.5, color: t.message, lineHeight: 1.5 }}>
+              {message}
+            </p>
+          </div>
         </div>
 
-        {title && (
-          <h3 style={{ margin: '0 0 6px 0', fontSize: 17, fontWeight: 700, color: t.title }}>
-            {title}
-          </h3>
-        )}
-        <p style={{ margin: 0, fontSize: 14, color: t.message, lineHeight: 1.55 }}>
-          {message}
-        </p>
-
-        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+        <div style={{ display: 'flex', gap: 10 }}>
           <button
             type="button"
             onClick={() => { if (!loading) onCancel?.(); }}

@@ -3,8 +3,8 @@ import { api, friendlyMessage } from '../../services/api';
 import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut, Loader2 } from 'lucide-react';
 import { useError } from '../../context/ErrorContext';
 import { useCookieConsent } from '../../context/CookieConsentContext';
+import { useConfirm } from '../../context/ConfirmContext';
 import { getCookie, setCookie } from '../../utils/cookies';
-import ConfirmDialog from '../../components/common/ConfirmDialog/ConfirmDialog';
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -19,7 +19,7 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData, 
   });
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const confirm = useConfirm();
   const fileInputRef = useRef(null);
 
   const { showError } = useError();
@@ -125,8 +125,16 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData, 
     }
   };
 
+  const handleLogoutClick = async () => {
+    const ok = await confirm('Are you sure you want to log out?', {
+      title: 'Log out?',
+      confirmLabel: 'Log Out',
+      cancelLabel: 'Cancel',
+    });
+    if (ok) onLogout?.();
+  };
+
   return (
-    <>
     <div style={{
       flex: 1,
       overflowY: 'auto',
@@ -320,7 +328,7 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData, 
 
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
           <button
-          onClick={() => setShowLogoutConfirm(true)}
+          onClick={handleLogoutClick}
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '12px 28px', borderRadius: 9999,
@@ -345,17 +353,5 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData, 
 
       </div>
     </div>
-
-    <ConfirmDialog
-      open={showLogoutConfirm}
-      isDark={isDark}
-      title="Log out?"
-      message="Are you sure you want to log out?"
-      confirmLabel="Log Out"
-      cancelLabel="Cancel"
-      onCancel={() => setShowLogoutConfirm(false)}
-      onConfirm={() => { setShowLogoutConfirm(false); onLogout?.(); }}
-    />
-    </>
   );
 }
