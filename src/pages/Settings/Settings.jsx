@@ -3,16 +3,16 @@ import { Moon, Sun, Monitor, Trash2, Download, Shield, Volume2 } from 'lucide-re
 import { api } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { useCookieConsent } from '../../context/CookieConsentContext';
+import { useConfirm } from '../../context/ConfirmContext';
 import { getCookie, setCookie } from '../../utils/cookies';
-import ConfirmDialog from '../../components/common/ConfirmDialog/ConfirmDialog';
 
 export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const { showError } = useError();
   const { hasConsent } = useCookieConsent();
+  const confirm = useConfirm();
   const [playbackSpeed, setPlaybackSpeed] = useState(getCookie('vlk_playback_speed') || '1.0');
   const [autoPlay, setAutoPlay] = useState(getCookie('vlk_autoplay') !== 'false');
   const [clearing, setClearing] = useState(false);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const colors = {
     bg: isDark ? 'rgba(30, 41, 59, 0.4)' : '#ffffff',
@@ -28,8 +28,6 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
     setPlaybackSpeed(speed);
     if (hasConsent) {
       setCookie('vlk_playback_speed', speed);
-    } else {
-      showError('Accept cookies to keep this preference for your next visit.', 'info');
     }
   };
 
@@ -38,28 +36,28 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
     setAutoPlay(newVal);
     if (hasConsent) {
       setCookie('vlk_autoplay', newVal.toString());
-    } else {
-      showError('Accept cookies to keep this preference for your next visit.', 'info');
     }
   };
 
-  const handleClearHistory = () => {
-    setShowClearConfirm(true);
-  };
+  const handleClearHistory = async () => {
+    const ok = await confirm('Are you sure you want to delete all your chat history? This cannot be undone.', {
+      title: 'Clear chat history',
+      confirmLabel: 'Clear',
+      cancelLabel: 'Cancel',
+      danger: true,
+    });
+    if (!ok) return;
 
-  const confirmClearHistory = async () => {
     setClearing(true);
     try {
       // Mocking for now as endpoint doesn't exist, but ready for implementation
       setTimeout(() => {
         showError('Chat history cleared successfully!', 'success');
         setClearing(false);
-        setShowClearConfirm(false);
       }, 1000);
     } catch (err) {
       showError('Failed to clear history');
       setClearing(false);
-      setShowClearConfirm(false);
     }
   };
 
@@ -103,7 +101,6 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   );
 
   return (
-    <>
     <div style={{
       flex: 1,
       height: '100%',
@@ -113,6 +110,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
       padding: '32px 40px',
       maxWidth: 800,
       margin: '0 auto',
+      width: '100%',
     }}>
       <h2 style={{ fontSize: 28, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Settings</h2>
       <p style={{ color: colors.textMuted, marginBottom: 32 }}>Manage your application preferences and account settings.</p>
@@ -250,19 +248,5 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
       <div style={{ height: 60 }} />
     </div>
     </div>
-
-    <ConfirmDialog
-      open={showClearConfirm}
-      isDark={isDark}
-      danger
-      title="Delete chat history?"
-      message="Are you sure you want to delete all your chat history? This action cannot be undone."
-      confirmLabel="Delete"
-      cancelLabel="Cancel"
-      loading={clearing}
-      onCancel={() => setShowClearConfirm(false)}
-      onConfirm={confirmClearHistory}
-    />
-    </>
   );
 }
