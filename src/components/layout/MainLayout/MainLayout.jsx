@@ -11,6 +11,8 @@ import {
   LogOut,
 } from 'lucide-react';
 import voiceLKIcon from '../../../assets/images/voicelk-icon.png';
+import { getCookie, setCookie } from '../../../utils/cookies';
+import { useCookieConsent } from '../../../context/CookieConsentContext';
 import HomeView from '../../../pages/Home/Home';
 import ProfileView from '../../../pages/Profile/Profile';
 import ChatView from '../../../pages/Chat/Chat';
@@ -357,15 +359,30 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
 }
 
 export default function MainLayout({ isAuthenticated = true, userData, onLoginClick, onLogout }) {
-  const [isDark, setIsDark] = useState(
-    () => window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  const { hasConsent } = useCookieConsent();
+
+  const [isDark, setIsDark] = useState(() => {
+    const saved = getCookie('vlk_theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
   useEffect(() => {
+    // Only track OS theme changes if the user hasn't picked their own via a saved cookie.
+    if (getCookie('vlk_theme')) return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const h = (e) => setIsDark(e.matches);
     mq.addEventListener('change', h);
     return () => mq.removeEventListener('change', h);
   }, []);
+
+  const handleToggleDark = () => {
+    setIsDark(prev => {
+      const next = !prev;
+      if (hasConsent) setCookie('vlk_theme', next ? 'dark' : 'light');
+      return next;
+    });
+  };
 
   const [expanded, setExpanded] = useState(() => window.innerWidth > 768);
 
@@ -550,13 +567,13 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
           </div>
 
           {activeNav === 'profile' ? (
-            <ProfileView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} onLogout={onLogout} userData={userData}
+            <ProfileView isDark={isDark} onToggleDark={handleToggleDark} onLogout={onLogout} userData={userData}
               cache={profileCache} onCacheUpdate={setProfileCache} />
           ) : activeNav === 'history' ? (
             <HistoryView isDark={isDark} userData={userData} onSelectHistoryItem={handleSelectHistoryItem}
               cache={historyCache} onCacheUpdate={setHistoryCache} />
           ) : activeNav === 'settings' ? (
-            <SettingsView isDark={isDark} onToggleDark={() => setIsDark(prev => !prev)} userData={userData} t={t} />
+            <SettingsView isDark={isDark} onToggleDark={handleToggleDark} userData={userData} t={t} />
           ) : activeNav === 'help' ? (
             <HelpView isDark={isDark} />
           ) : activeNav === 'chat' ? (

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { api, friendlyMessage } from '../../services/api';
 import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut } from 'lucide-react';
 import { useError } from '../../context/ErrorContext';
+import { useCookieConsent } from '../../context/CookieConsentContext';
+import { getCookie, setCookie } from '../../utils/cookies';
 
 export default function ProfileView({ isDark, onToggleDark, onLogout, userData, cache, onCacheUpdate }) {
   const [user, setUser] = useState(() => {
@@ -14,6 +16,7 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData, 
   });
 
   const { showError } = useError();
+  const { hasConsent } = useCookieConsent();
 
   useEffect(() => {
     if (userData && userData.userId) {
@@ -47,7 +50,16 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData, 
     }
   }, [userData]);
   
-  const [language, setLanguage] = useState('English');
+  const [language, setLanguageState] = useState(getCookie('vlk_language') || 'English');
+
+  const setLanguage = (value) => {
+    setLanguageState(value);
+    if (hasConsent) {
+      setCookie('vlk_language', value);
+    } else {
+      showError('Accept cookies to keep this preference for your next visit.', 'info');
+    }
+  };
 
   const theme = {
     bg: isDark ? '#060f1e' : '#f8fafc',

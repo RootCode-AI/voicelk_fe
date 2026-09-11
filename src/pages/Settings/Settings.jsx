@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { Moon, Sun, Monitor, Trash2, Download, Shield, Volume2 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
+import { useCookieConsent } from '../../context/CookieConsentContext';
+import { getCookie, setCookie } from '../../utils/cookies';
 
 export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const { showError } = useError();
-  const [playbackSpeed, setPlaybackSpeed] = useState(localStorage.getItem('vlk_playbackSpeed') || '1.0');
-  const [autoPlay, setAutoPlay] = useState(localStorage.getItem('vlk_autoPlay') !== 'false');
+  const { hasConsent } = useCookieConsent();
+  const [playbackSpeed, setPlaybackSpeed] = useState(getCookie('vlk_playback_speed') || '1.0');
+  const [autoPlay, setAutoPlay] = useState(getCookie('vlk_autoplay') !== 'false');
   const [clearing, setClearing] = useState(false);
 
   const colors = {
@@ -21,13 +24,21 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
 
   const handleSpeedChange = (speed) => {
     setPlaybackSpeed(speed);
-    localStorage.setItem('vlk_playbackSpeed', speed);
+    if (hasConsent) {
+      setCookie('vlk_playback_speed', speed);
+    } else {
+      showError('Accept cookies to keep this preference for your next visit.', 'info');
+    }
   };
 
   const handleAutoPlayToggle = () => {
     const newVal = !autoPlay;
     setAutoPlay(newVal);
-    localStorage.setItem('vlk_autoPlay', newVal.toString());
+    if (hasConsent) {
+      setCookie('vlk_autoplay', newVal.toString());
+    } else {
+      showError('Accept cookies to keep this preference for your next visit.', 'info');
+    }
   };
 
   const handleClearHistory = async () => {

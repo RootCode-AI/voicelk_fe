@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import AuthPage from './features/auth/components/AuthPage';
 import MainLayout from './components/layout/MainLayout/MainLayout';
 import ErrorBoundary from './components/common/ErrorBoundary/ErrorBoundary';
+import CookieConsentBanner from './components/common/CookieConsentBanner/CookieConsentBanner';
 import { ErrorProvider, useError } from './context/ErrorContext';
+import { CookieConsentProvider } from './context/CookieConsentContext';
 
 function AppInner() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -107,6 +109,7 @@ function AppInner() {
           <AuthPage onLogin={handleLogin} />
         </div>
       )}
+      <CookieConsentBanner />
     </>
   );
 }
@@ -114,7 +117,9 @@ function AppInner() {
 function App() {
   return (
     <ErrorProvider>
-      <AppInner />
+      <CookieConsentProvider>
+        <AppInner />
+      </CookieConsentProvider>
     </ErrorProvider>
   );
 }

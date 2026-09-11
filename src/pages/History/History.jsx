@@ -31,7 +31,7 @@ function groupByDate(items) {
 }
 
 export default function HistoryView({ isDark, userData, onSelectHistoryItem, cache, onCacheUpdate }) {
-  const isCacheFresh = cache?.userId === userData?.userId;
+  const isCacheFresh = !!cache && !!userData?.userId && cache.userId === userData.userId;
   const [historyItems, setHistoryItems] = useState(isCacheFresh ? cache.items : []);
   const [loading, setLoading] = useState(false);
   const { showError } = useError();
