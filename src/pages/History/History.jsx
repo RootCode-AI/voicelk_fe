@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Bot, Clock, Loader2, Trash2 } from 'lucide-react';
 import { api, friendlyMessage } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 function formatRelativeDate(dateStr) {
   const date = new Date(dateStr);
@@ -35,6 +36,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
   const [historyItems, setHistoryItems] = useState(isCacheFresh ? cache.items : []);
   const [loading, setLoading] = useState(false);
   const { showError } = useError();
+  const confirm = useConfirm();
 
   useEffect(() => {
     if (!userData?.userId) return;
@@ -74,7 +76,13 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
 
   const handleDelete = async (e, queryId) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this chat history?')) return;
+    const ok = await confirm('Are you sure you want to delete this chat history?', {
+      title: 'Delete chat history',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      danger: true,
+    });
+    if (!ok) return;
 
     try {
       await api.delete(`/api/queries/${queryId}`);

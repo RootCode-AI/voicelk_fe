@@ -5,14 +5,13 @@ import {
   Settings,
   HelpCircle,
   PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Bell,
   LogIn,
   LogOut,
 } from 'lucide-react';
 import voiceLKIcon from '../../../assets/images/voicelk-icon.png';
-import { getCookie, setCookie } from '../../../utils/cookies';
-import { useCookieConsent } from '../../../context/CookieConsentContext';
 import HomeView from '../../../pages/Home/Home';
 import ProfileView from '../../../pages/Profile/Profile';
 import ChatView from '../../../pages/Chat/Chat';
@@ -106,6 +105,42 @@ const NAV_BOTTOM = [
   { id: 'settings', label: 'Settings', Icon: Settings },
   { id: 'help',     label: 'Help',     Icon: HelpCircle },
 ];
+
+// Floating label shown on hover, used for the icon-only collapsed sidebar
+// where nav items have no visible text.
+function Tooltip({ label, isDark, children }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div
+      style={{ position: 'relative', display: 'flex', width: '100%', justifyContent: 'center' }}
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+    >
+      {children}
+      {visible && (
+        <div style={{
+          position: 'absolute', left: 'calc(100% + 8px)', top: '50%',
+          transform: 'translateY(-50%)',
+          padding: '5px 10px', borderRadius: 6,
+          background: isDark ? '#f1f5f9' : '#111827',
+          color: isDark ? '#0f172a' : '#ffffff',
+          fontSize: 12, fontWeight: 600,
+          whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 100,
+          boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+          animation: 'tooltipFadeIn 0.12s ease',
+        }}>
+          {label}
+          <div style={{
+            position: 'absolute', right: '100%', top: '50%', transform: 'translateY(-50%)',
+            width: 0, height: 0,
+            borderTop: '5px solid transparent', borderBottom: '5px solid transparent',
+            borderRight: `5px solid ${isDark ? '#f1f5f9' : '#111827'}`,
+          }} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 function IconBtn({ onClick, title, children, t, style = {} }) {
   return (
@@ -358,32 +393,7 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
   );
 }
 
-export default function MainLayout({ isAuthenticated = true, userData, onLoginClick, onLogout }) {
-  const { hasConsent } = useCookieConsent();
-
-  const [isDark, setIsDark] = useState(() => {
-    const saved = getCookie('vlk_theme');
-    if (saved) return saved === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  useEffect(() => {
-    // Only track OS theme changes if the user hasn't picked their own via a saved cookie.
-    if (getCookie('vlk_theme')) return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const h = (e) => setIsDark(e.matches);
-    mq.addEventListener('change', h);
-    return () => mq.removeEventListener('change', h);
-  }, []);
-
-  const handleToggleDark = () => {
-    setIsDark(prev => {
-      const next = !prev;
-      if (hasConsent) setCookie('vlk_theme', next ? 'dark' : 'light');
-      return next;
-    });
-  };
-
+export default function MainLayout({ isAuthenticated = true, userData, onLoginClick, onLogout, isDark, onToggleDark }) {
   const [expanded, setExpanded] = useState(() => window.innerWidth > 768);
 
   useEffect(() => {
@@ -397,7 +407,14 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
   }, []);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [activeNav, setActiveNav] = useState('new_chat');
+  // Restore the last visited tab on refresh instead of always snapping back to home.
+  const [activeNav, setActiveNav] = useState(() => {
+    try {
+      return sessionStorage.getItem('vlk_active_nav') || 'new_chat';
+    } catch (_) {
+      return 'new_chat';
+    }
+  });
   const [chatInitialMessage, setChatInitialMessage] = useState('');
   const [chatInitialHistoryItem, setChatInitialHistoryItem] = useState(null);
 
@@ -405,6 +422,12 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
   // of History/Profile) so switching tabs doesn't re-trigger the same fetch.
   const [historyCache, setHistoryCache] = useState(null);
   const [profileCache, setProfileCache] = useState(null);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('vlk_active_nav', activeNav);
+    } catch (_) { /* storage unavailable, ignore */ }
+  }, [activeNav]);
 
   // Redirect away from profile if logged out
   useEffect(() => {
@@ -442,6 +465,10 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
         }
         @keyframes fadeIn {
           from { opacity: 0; } to { opacity: 1; }
+        }
+        @keyframes tooltipFadeIn {
+          from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+          to   { opacity: 1; transform: translateY(-50%) translateX(0); }
         }
         #voicelk-input::placeholder { color: ${t.inputPlaceholder}; }
         @media (max-width: 768px) {
@@ -567,13 +594,13 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
           </div>
 
           {activeNav === 'profile' ? (
-            <ProfileView isDark={isDark} onToggleDark={handleToggleDark} onLogout={onLogout} userData={userData}
+            <ProfileView isDark={isDark} onToggleDark={onToggleDark} onLogout={onLogout} userData={userData}
               cache={profileCache} onCacheUpdate={setProfileCache} />
           ) : activeNav === 'history' ? (
             <HistoryView isDark={isDark} userData={userData} onSelectHistoryItem={handleSelectHistoryItem}
               cache={historyCache} onCacheUpdate={setHistoryCache} />
           ) : activeNav === 'settings' ? (
-            <SettingsView isDark={isDark} onToggleDark={handleToggleDark} userData={userData} t={t} />
+            <SettingsView isDark={isDark} onToggleDark={onToggleDark} userData={userData} t={t} />
           ) : activeNav === 'help' ? (
             <HelpView isDark={isDark} />
           ) : activeNav === 'chat' ? (

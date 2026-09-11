@@ -4,13 +4,40 @@ import MainLayout from './components/layout/MainLayout/MainLayout';
 import ErrorBoundary from './components/common/ErrorBoundary/ErrorBoundary';
 import CookieConsentBanner from './components/common/CookieConsentBanner/CookieConsentBanner';
 import { ErrorProvider, useError } from './context/ErrorContext';
-import { CookieConsentProvider } from './context/CookieConsentContext';
+import { CookieConsentProvider, useCookieConsent } from './context/CookieConsentContext';
+import { ConfirmProvider } from './context/ConfirmContext';
+import { getCookie, setCookie } from './utils/cookies';
 
 function AppInner() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [userData, setUserData] = useState(null);
   const { showError } = useError();
+  const { hasConsent } = useCookieConsent();
+
+  // Single source of truth for theme, shared by MainLayout and the login overlay
+  // so both are never out of sync with each other.
+  const [isDark, setIsDark] = useState(() => {
+    const saved = getCookie('vlk_theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    if (getCookie('vlk_theme')) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const h = (e) => setIsDark(e.matches);
+    mq.addEventListener('change', h);
+    return () => mq.removeEventListener('change', h);
+  }, []);
+
+  const handleToggleDark = () => {
+    setIsDark(prev => {
+      const next = !prev;
+      if (hasConsent) setCookie('vlk_theme', next ? 'dark' : 'light');
+      return next;
+    });
+  };
 
   // Check for existing token on mount
   useEffect(() => {
@@ -76,6 +103,8 @@ function AppInner() {
           userData={userData}
           onLoginClick={() => setShowLogin(true)}
           onLogout={handleLogout}
+          isDark={isDark}
+          onToggleDark={handleToggleDark}
         />
       </ErrorBoundary>
       {showLogin && (
@@ -106,7 +135,7 @@ function AppInner() {
           >
             ✕
           </button>
-          <AuthPage onLogin={handleLogin} />
+          <AuthPage onLogin={handleLogin} isDark={isDark} />
         </div>
       )}
       <CookieConsentBanner />
@@ -117,9 +146,11 @@ function AppInner() {
 function App() {
   return (
     <ErrorProvider>
-      <CookieConsentProvider>
-        <AppInner />
-      </CookieConsentProvider>
+      <ConfirmProvider>
+        <CookieConsentProvider>
+          <AppInner />
+        </CookieConsentProvider>
+      </ConfirmProvider>
     </ErrorProvider>
   );
 }

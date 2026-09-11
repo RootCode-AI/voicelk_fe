@@ -3,11 +3,13 @@ import { Moon, Sun, Monitor, Trash2, Download, Shield, Volume2 } from 'lucide-re
 import { api } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { useCookieConsent } from '../../context/CookieConsentContext';
+import { useConfirm } from '../../context/ConfirmContext';
 import { getCookie, setCookie } from '../../utils/cookies';
 
 export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const { showError } = useError();
   const { hasConsent } = useCookieConsent();
+  const confirm = useConfirm();
   const [playbackSpeed, setPlaybackSpeed] = useState(getCookie('vlk_playback_speed') || '1.0');
   const [autoPlay, setAutoPlay] = useState(getCookie('vlk_autoplay') !== 'false');
   const [clearing, setClearing] = useState(false);
@@ -26,8 +28,6 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
     setPlaybackSpeed(speed);
     if (hasConsent) {
       setCookie('vlk_playback_speed', speed);
-    } else {
-      showError('Accept cookies to keep this preference for your next visit.', 'info');
     }
   };
 
@@ -36,14 +36,18 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
     setAutoPlay(newVal);
     if (hasConsent) {
       setCookie('vlk_autoplay', newVal.toString());
-    } else {
-      showError('Accept cookies to keep this preference for your next visit.', 'info');
     }
   };
 
   const handleClearHistory = async () => {
-    if (!window.confirm("Are you sure you want to delete all your chat history? This cannot be undone.")) return;
-    
+    const ok = await confirm('Are you sure you want to delete all your chat history? This cannot be undone.', {
+      title: 'Clear chat history',
+      confirmLabel: 'Clear',
+      cancelLabel: 'Cancel',
+      danger: true,
+    });
+    if (!ok) return;
+
     setClearing(true);
     try {
       // Mocking for now as endpoint doesn't exist, but ready for implementation
@@ -97,13 +101,12 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   );
 
   return (
+    <div style={{ height: '100%', overflowY: 'auto' }}>
     <div style={{
       padding: '32px 40px',
       maxWidth: 800,
       margin: '0 auto',
       width: '100%',
-      height: '100%',
-      overflowY: 'auto',
     }}>
       <h2 style={{ fontSize: 28, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Settings</h2>
       <p style={{ color: colors.textMuted, marginBottom: 32 }}>Manage your application preferences and account settings.</p>
@@ -239,6 +242,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
 
       {/* spacer for bottom scroll */}
       <div style={{ height: 60 }} />
+    </div>
     </div>
   );
 }
