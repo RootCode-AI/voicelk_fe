@@ -462,9 +462,9 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
   const [chatInitialHistoryItem, setChatInitialHistoryItem] = useState(null);
 
   // Cached backend responses, kept here (above the tab-driven unmount/remount
-  // of History/Profile) so switching tabs doesn't re-trigger the same fetch.
+  // of History) so switching tabs doesn't re-trigger the same fetch. Profile
+  // data caches itself via useUserProfile instead.
   const [historyCache, setHistoryCache] = useState(null);
-  const [profileCache, setProfileCache] = useState(null);
 
   // Fetch the real profile (name + Google/uploaded avatar) as soon as we're
   // authenticated, not just when the user opens the Profile tab, so the
@@ -714,8 +714,7 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
           </div>
 
           {activeNav === 'profile' ? (
-            <ProfileView isDark={isDark} onToggleDark={onToggleDark} onLogout={onLogout} userData={userData}
-              cache={profileCache} onCacheUpdate={setProfileCache} />
+            <ProfileView isDark={isDark} onToggleDark={onToggleDark} onLogout={onLogout} userData={userData} />
           ) : activeNav === 'history' ? (
             <HistoryView isDark={isDark} userData={userData} onSelectHistoryItem={handleSelectHistoryItem}
               cache={historyCache} onCacheUpdate={setHistoryCache} />

@@ -1,65 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
-import { api, friendlyMessage } from '../../services/api';
-import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut } from 'lucide-react';
 import { useError } from '../../context/ErrorContext';
 import { useCookieConsent } from '../../context/CookieConsentContext';
-import { useConfirm } from '../../context/ConfirmContext';
+import { useUserProfile } from '../../hooks/useUserProfile';
 import { getCookie, setCookie } from '../../utils/cookies';
 
-const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
-
-export default function ProfileView({ isDark, onToggleDark, onLogout, userData, cache, onCacheUpdate }) {
-  const [user, setUser] = useState(() => {
-    if (cache?.userId === userData?.userId) return cache.data;
-    return {
-      fullName: userData?.email?.split('@')[0] || '',
-      email: userData?.email || '',
-      avatar: ''
-    };
-  });
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [avatarError, setAvatarError] = useState(false);
-  const confirm = useConfirm();
-  const fileInputRef = useRef(null);
-
+export default function ProfileView({ isDark, onToggleDark, onLogout, userData }) {
   const { showError } = useError();
   const { hasConsent } = useCookieConsent();
+  const { profile } = useUserProfile(userData?.userId, showError);
 
-  useEffect(() => {
-    if (userData && userData.userId) {
-      if (cache?.userId === userData.userId) {
-        setUser(cache.data);
-        return;
-      }
-
-      api.get(`/api/reg/${userData.userId}`)
-        .then(data => {
-          if (data) {
-            const mapped = {
-              fullName: data.userName || data.email?.split('@')[0] || '',
-              email: data.email || '',
-              avatar: data.profilePicture || ''
-            };
-            setUser(mapped);
-            onCacheUpdate?.({ userId: userData.userId, data: mapped });
-          }
-        })
-        .catch(err => {
-          console.error("Failed to fetch user profile", err);
-          showError(friendlyMessage(err), 'error');
-        });
-    } else {
-      setUser({
-        fullName: '',
-        email: '',
-        avatar: ''
-      });
-    }
-  }, [userData]);
-
-  useEffect(() => {
-    setAvatarError(false);
-  }, [user.avatar]);
+  const user = profile || {
+    fullName: userData?.email?.split('@')[0] || '',
+    email: userData?.email || '',
+    avatar: '',
+  };
 
   const [language, setLanguageState] = useState(getCookie('vlk_language') || 'English');
 
