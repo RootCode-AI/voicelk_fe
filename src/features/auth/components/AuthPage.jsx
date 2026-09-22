@@ -295,12 +295,16 @@ export default function AuthPage({ onLogin, isDark = false }) {
 
       const data = await api.post('/auth/firebase', { idToken });
 
+      // Fall back to the Google account's own photo when the backend hasn't
+      // synced a profilePicture yet (e.g. a brand-new Google sign-in).
+      const avatar = data.profilePicture || result.user.photoURL || '';
+
       localStorage.setItem('voicelk_token', data.token);
       localStorage.setItem('voicelk_user', JSON.stringify({
         userId: data.userId,
         email: data.email,
         userName: data.userName,
-        avatar: data.profilePicture,
+        avatar,
         role: data.role,
       }));
 
@@ -309,7 +313,7 @@ export default function AuthPage({ onLogin, isDark = false }) {
         userId: data.userId,
         email: data.email,
         userName: data.userName,
-        avatar: data.profilePicture,
+        avatar,
         role: data.role,
       });
 

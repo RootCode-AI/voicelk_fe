@@ -1,20 +1,33 @@
-import { useState } from 'react';
-import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut, Loader2 } from 'lucide-react';
+import { api, friendlyMessage } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { useCookieConsent } from '../../context/CookieConsentContext';
+import { useConfirm } from '../../context/ConfirmContext';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { getCookie, setCookie } from '../../utils/cookies';
+
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function ProfileView({ isDark, onToggleDark, onLogout, userData }) {
   const { showError } = useError();
   const { hasConsent } = useCookieConsent();
-  const { profile } = useUserProfile(userData?.userId, showError);
+  const confirm = useConfirm();
+  const { profile, updateProfile } = useUserProfile(userData?.userId, showError);
 
   const user = profile || {
-    fullName: userData?.email?.split('@')[0] || '',
+    fullName: userData?.userName || userData?.email?.split('@')[0] || '',
     email: userData?.email || '',
-    avatar: '',
+    avatar: userData?.avatar || '',
   };
+
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [user.avatar]);
 
   const [language, setLanguageState] = useState(getCookie('vlk_language') || 'English');
 
@@ -69,9 +82,7 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
     setUploadingAvatar(true);
     try {
       const data = await api.upload(`/api/reg/${userData.userId}/avatar`, formData);
-      const updated = { ...user, avatar: data.profilePicture || '' };
-      setUser(updated);
-      onCacheUpdate?.({ userId: userData.userId, data: updated });
+      updateProfile({ ...user, avatar: data.profilePicture || '' });
     } catch (err) {
       console.error('Failed to upload avatar', err);
       showError(friendlyMessage(err), 'error');

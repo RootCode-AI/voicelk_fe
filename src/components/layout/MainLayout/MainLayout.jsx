@@ -462,9 +462,10 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
   const [chatInitialHistoryItem, setChatInitialHistoryItem] = useState(null);
 
   // Cached backend responses, kept here (above the tab-driven unmount/remount
-  // of History) so switching tabs doesn't re-trigger the same fetch. Profile
-  // data caches itself via useUserProfile instead.
+  // of History) so switching tabs doesn't re-trigger the same fetch.
   const [historyCache, setHistoryCache] = useState(null);
+  // Separate small cache just for the topbar avatar/name prefetch below.
+  const [profileCache, setProfileCache] = useState(null);
 
   // Fetch the real profile (name + Google/uploaded avatar) as soon as we're
   // authenticated, not just when the user opens the Profile tab, so the

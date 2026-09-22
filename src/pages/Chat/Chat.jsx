@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2, Star, MessageSquare } from 'lucide-react';
 import { api, friendlyMessage, ApiError } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
+import { getCookie } from '../../utils/cookies';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -172,7 +173,7 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
   );
 }
 
-function AudioPlayer({ audioId, audioDuration, isDark, userId }) {
+function AudioPlayer({ audioId, audioDuration, isDark, userId, autoPlay = false }) {
   const audioRef = useRef(null);
   const progressRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -219,14 +220,20 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId }) {
       if (audio.duration && isFinite(audio.duration)) {
         setDuration(audio.duration);
       }
-      
-      // Apply user playback speed setting
-      const savedSpeed = localStorage.getItem('vlk_playbackSpeed');
+
+      // Apply the playback speed saved in Settings > Audio & Playback
+      const savedSpeed = getCookie('vlk_playback_speed');
       if (savedSpeed) {
         audio.playbackRate = parseFloat(savedSpeed);
       }
-      
+
       setIsLoading(false);
+
+      // Auto-play newly generated responses, matching Settings > Audio & Playback
+      // > Auto-Play Audio (on by default). Never auto-play a reopened history item.
+      if (autoPlay && getCookie('vlk_autoplay') !== 'false') {
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      }
     };
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
     const onEnded = () => { setIsPlaying(false); setCurrentTime(0); };
@@ -249,7 +256,7 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId }) {
       audio.removeEventListener('canplay', onCanPlay);
       audio.removeEventListener('error', onError);
     };
-  }, [blobUrl]); // re-bind when blobUrl changes
+  }, [blobUrl, autoPlay]); // re-bind when blobUrl changes
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -562,6 +569,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
               audioId: data.audioId || null,
               audioDuration: data.audioDuration || null,
               isAudioLoading: !data.audioId && data.answerId ? true : false,
+              isFresh: true,
             }
           : msg
       ));
@@ -721,6 +729,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
                       audioDuration={msg.audioDuration}
                       isDark={isDark}
                       userId={userData?.userId}
+                      autoPlay={!!msg.isFresh}
                     />
                     <FeedbackWidget
                       audioId={msg.audioId}
