@@ -17,6 +17,7 @@ import HomeView from '../../../pages/Home/Home';
 import ProfileView from '../../../pages/Profile/Profile';
 import ChatView from '../../../pages/Chat/Chat';
 import HistoryView from '../../../pages/History/History';
+import { mapHistoryItem } from '../../../utils/history';
 import HelpView from '../../../pages/Help/Help';
 import SettingsView from '../../../pages/Settings/Settings';
 
@@ -170,6 +171,7 @@ function AvatarCircle({ src, label, size, gradient, textColor, fontSize }) {
       <img
         src={src}
         alt="User avatar"
+        referrerPolicy="no-referrer"
         onError={() => setErrored(true)}
         style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
       />
@@ -464,6 +466,36 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
   // Cached backend responses, kept here (above the tab-driven unmount/remount
   // of History) so switching tabs doesn't re-trigger the same fetch.
   const [historyCache, setHistoryCache] = useState(null);
+  // Questions asked in Chat this session, shown at the top of History straight
+  // away (marked pending while the backend is still answering).
+  const [recentHistory, setRecentHistory] = useState([]);
+
+  useEffect(() => {
+    setRecentHistory([]);
+  }, [userData?.userId]);
+
+  const handleHistoryPending = useCallback((tempId, text) => {
+    setRecentHistory(prev => [{
+      id: tempId,
+      content: text,
+      responseText: '',
+      timestamp: new Date().toISOString(),
+      statusTag: 'Sending…',
+      pending: true,
+    }, ...prev]);
+  }, []);
+
+  const handleHistoryResolved = useCallback((tempId, data) => {
+    if (!data?.queryId) {
+      setRecentHistory(prev => prev.filter(i => i.id !== tempId));
+      return;
+    }
+    const item = mapHistoryItem(data);
+    setRecentHistory(prev => prev.map(i => (i.id === tempId ? item : i)));
+    setHistoryCache(prev => (prev
+      ? { ...prev, items: [item, ...prev.items.filter(i => i.id !== item.id)] }
+      : prev));
+  }, []);
   // Separate small cache just for the topbar avatar/name prefetch below.
   const [profileCache, setProfileCache] = useState(null);
 
@@ -648,6 +680,10 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
                 <>
                   <div
                     title={userData?.email || 'User'}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setActiveNav('profile')}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveNav('profile'); } }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       background: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
@@ -718,14 +754,16 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
             <ProfileView isDark={isDark} onToggleDark={onToggleDark} onLogout={onLogout} userData={userData} />
           ) : activeNav === 'history' ? (
             <HistoryView isDark={isDark} userData={userData} onSelectHistoryItem={handleSelectHistoryItem}
-              cache={historyCache} onCacheUpdate={setHistoryCache} />
+              cache={historyCache} onCacheUpdate={setHistoryCache}
+              recentItems={recentHistory}
+              onRecentRemove={(id) => setRecentHistory(prev => prev.filter(i => i.id !== id))} />
           ) : activeNav === 'settings' ? (
             <SettingsView isDark={isDark} onToggleDark={onToggleDark} userData={userData} t={t} />
           ) : activeNav === 'help' ? (
             <HelpView isDark={isDark} />
           ) : activeNav === 'chat' ? (
             <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} initialHistoryItem={chatInitialHistoryItem} userData={userData}
-              onHistorySync={() => setHistoryCache(null)} />
+              onHistoryPending={handleHistoryPending} onHistoryResolved={handleHistoryResolved} />
           ) : (
             <HomeView t={t} isDark={isDark} onSubmit={handleHomeSubmit} />
           )}

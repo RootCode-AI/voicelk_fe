@@ -15,11 +15,14 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
   const confirm = useConfirm();
   const { profile, updateProfile } = useUserProfile(userData?.userId, showError);
 
-  const user = profile || {
+  const fallbackUser = {
     fullName: userData?.userName || userData?.email?.split('@')[0] || '',
     email: userData?.email || '',
     avatar: userData?.avatar || '',
   };
+  const user = profile
+    ? { ...profile, avatar: profile.avatar || fallbackUser.avatar }
+    : fallbackUser;
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
@@ -118,6 +121,7 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
                 key={user.avatar}
                 src={user.avatar}
                 alt="User avatar"
+                referrerPolicy="no-referrer"
                 onError={() => setAvatarError(true)}
                 style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 4px 14px rgba(0,0,0,0.1)' }}
               />

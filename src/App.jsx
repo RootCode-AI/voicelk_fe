@@ -7,6 +7,8 @@ import { ErrorProvider, useError } from './context/ErrorContext';
 import { CookieConsentProvider, useCookieConsent } from './context/CookieConsentContext';
 import { ConfirmProvider } from './context/ConfirmContext';
 import { getCookie, setCookie } from './utils/cookies';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './services/firebase';
 
 function loadStoredSession() {
   try {
@@ -84,6 +86,21 @@ function AppInner() {
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
   }, [showError]);
+
+  // Google users who signed in before the avatar was stored in the session have
+  // no `avatar` saved locally; backfill it from the persisted Firebase session.
+  useEffect(() => {
+    return onAuthStateChanged(auth, (fbUser) => {
+      const photo = fbUser?.photoURL;
+      if (!photo) return;
+      setUserData(prev => {
+        if (!prev || prev.avatar || prev.email !== fbUser.email) return prev;
+        const next = { ...prev, avatar: photo, userName: prev.userName || fbUser.displayName || prev.userName };
+        localStorage.setItem('voicelk_user', JSON.stringify(next));
+        return next;
+      });
+    });
+  }, []);
 
   const handleLogin = (data) => {
     setUserData(data);

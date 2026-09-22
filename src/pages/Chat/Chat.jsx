@@ -445,7 +445,7 @@ function ThinkingBubble({ isDark }) {
   );
 }
 
-export default function ChatView({ t, isDark, initialMessage = '', initialHistoryItem = null, userData, onHistorySync }) {
+export default function ChatView({ t, isDark, initialMessage = '', initialHistoryItem = null, userData, onHistoryPending, onHistoryResolved }) {
   const [messages, setMessages] = useState([]);
   const [inputVal, setInputVal] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -543,6 +543,11 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       isThinking: true,
     }]);
 
+    // Show the question at the top of History right away, before the backend replies.
+    const historyTempId = `pending-${thinkingId}`;
+    const tracksHistory = !!userData?.userId;
+    if (tracksHistory) onHistoryPending?.(historyTempId, text);
+
     try {
       console.log('[ChatView] Sending to /api/ask:', { inputText: text, syllabusTopic: '', userId: userData?.userId || '' });
       const data = await api.post('/api/ask', {
@@ -552,12 +557,14 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       });
       console.log('[ChatView] Response:', data);
 
-      // A new query was saved server-side for this user — invalidate the
-      // cached History list so it refetches instead of showing a stale/empty state.
-      if (userData?.userId && onHistorySync) onHistorySync();
+      if (tracksHistory) onHistoryResolved?.(historyTempId, data);
 
       // Replace thinking bubble with the real response, revealed gradually
       const responseText = data.responseText || 'No response received.';
+      // Guests get text only, and a failed or disabled clip will not appear later,
+      // so only wait for audio when the backend says none is stored yet.
+      const waitForAudio = !data.audioId && !!data.answerId
+        && (!data.audioStatus || data.audioStatus === 'NOT_GENERATED');
       setMessages(prev => prev.map(msg =>
         msg.id === thinkingId
           ? {
@@ -568,7 +575,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
               answerId: data.answerId,
               audioId: data.audioId || null,
               audioDuration: data.audioDuration || null,
-              isAudioLoading: !data.audioId && data.answerId ? true : false,
+              isAudioLoading: waitForAudio,
               isFresh: true,
             }
           : msg
@@ -576,11 +583,12 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       typeOutMessage(thinkingId, responseText);
 
       // If the backend didn't return audioId directly, try fetching it
-      if (!data.audioId && data.answerId) {
+      if (waitForAudio) {
         fetchAudioForMessage(thinkingId, data.answerId);
       }
     } catch (err) {
       console.error('[ChatView] Error:', err);
+      if (tracksHistory) onHistoryResolved?.(historyTempId, null);
       showError(friendlyMessage(err), 'error');
       // Replace thinking bubble with a brief inline note
       setMessages(prev => prev.map(msg =>
