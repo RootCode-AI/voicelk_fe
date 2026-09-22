@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api, friendlyMessage } from '../services/api';
 
 // Shared across every component instance for the app's lifetime, so
@@ -45,5 +45,14 @@ export function useUserProfile(userId, showError) {
       .finally(() => setLoading(false));
   }, [userId]);
 
-  return { profile, loading };
+  // Patch the cached profile in place, e.g. after an avatar upload, so the
+  // change is reflected everywhere without a refetch.
+  const updateProfile = useCallback((patch) => {
+    if (!userId) return;
+    const next = { ...(profileCache.get(userId) || {}), ...patch };
+    profileCache.set(userId, next);
+    setProfile(next);
+  }, [userId]);
+
+  return { profile, loading, updateProfile };
 }

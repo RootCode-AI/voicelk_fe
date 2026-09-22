@@ -3,6 +3,7 @@ import { Bot, Clock, Loader2, Trash2 } from 'lucide-react';
 import { api, friendlyMessage } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { useConfirm } from '../../context/ConfirmContext';
+import { mapHistoryItem } from '../../utils/history';
 
 function formatRelativeDate(dateStr) {
   const date = new Date(dateStr);
@@ -31,7 +32,7 @@ function groupByDate(items) {
   return Object.entries(groups).map(([dateLabel, items]) => ({ dateLabel, items }));
 }
 
-export default function HistoryView({ isDark, userData, onSelectHistoryItem, cache, onCacheUpdate }) {
+export default function HistoryView({ isDark, userData, onSelectHistoryItem, cache, onCacheUpdate, recentItems = [], onRecentRemove }) {
   const isCacheFresh = !!cache && !!userData?.userId && cache.userId === userData.userId;
   const [historyItems, setHistoryItems] = useState(isCacheFresh ? cache.items : []);
   const [loading, setLoading] = useState(false);
@@ -50,18 +51,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
 
     api.get(`/api/ask/history/${userData.userId}`)
       .then(data => {
-        const mapped = Array.isArray(data)
-          ? data.map(item => ({
-            id: item.queryId,
-            content: item.inputText,
-            responseText: item.responseText || '',
-            timestamp: item.timestamp,
-            statusTag: item.source || 'AI',
-            answerId: item.answerId || null,
-            audioId: item.audioId || null,
-            audioDuration: item.audioDuration || null,
-          }))
-          : [];
+        const mapped = Array.isArray(data) ? data.map(mapHistoryItem) : [];
         setHistoryItems(mapped);
         onCacheUpdate?.({ userId: userData.userId, items: mapped });
       })
@@ -70,9 +60,13 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
         showError(friendlyMessage(err), 'error');
       })
       .finally(() => setLoading(false));
-  }, [userData?.userId]);
+  }, [userData?.userId, cache]);
 
-  const historyGroups = groupByDate(historyItems);
+  // Questions sent from Chat this session (including ones still in flight) go on
+  // top immediately; once the server list contains them, the server copy wins.
+  const knownIds = new Set(historyItems.map(i => i.id));
+  const displayItems = [...recentItems.filter(i => !knownIds.has(i.id)), ...historyItems];
+  const historyGroups = groupByDate(displayItems);
 
   const handleDelete = async (e, queryId) => {
     e.stopPropagation();
@@ -88,6 +82,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
       await api.delete(`/api/queries/${queryId}`);
       const updated = historyItems.filter(item => item.id !== queryId);
       setHistoryItems(updated);
+      onRecentRemove?.(queryId);
       if (userData?.userId) {
         onCacheUpdate?.({ userId: userData.userId, items: updated });
       }
@@ -177,15 +172,16 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   {group.items.map((item, ii) => (
                     <div key={item.id ?? ii}>
-                      <div 
-                        onClick={() => onSelectHistoryItem && onSelectHistoryItem(item)}
-                        style={{ 
-                          display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16, 
+                      <div
+                        onClick={() => !item.pending && onSelectHistoryItem && onSelectHistoryItem(item)}
+                        style={{
+                          display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16,
                           padding: '18px 12px', margin: '0 -12px',
-                          cursor: 'pointer', borderRadius: 12,
-                          transition: 'background 0.2s'
+                          cursor: item.pending ? 'default' : 'pointer', borderRadius: 12,
+                          transition: 'background 0.2s',
+                          opacity: item.pending ? 0.75 : 1,
                         }}
-                        onMouseEnter={e => e.currentTarget.style.background = theme.itemHoverBg}
+                        onMouseEnter={e => { if (!item.pending) e.currentTarget.style.background = theme.itemHoverBg; }}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
                         <div 
@@ -225,16 +221,20 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
                             <span>{formatTime(item.timestamp)}</span>
                             <span style={{ color: theme.dot, fontWeight: 700, fontSize: 14 }}>·</span>
                             <span style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 5,
                               background: theme.badgeBg, color: theme.badgeText,
                               padding: '2px 10px', borderRadius: 9999,
                               fontSize: 11.5, fontWeight: 600,
                             }}>
+                              {item.pending && (
+                                <Loader2 size={11} strokeWidth={2.5} style={{ animation: 'spin 0.8s linear infinite' }} />
+                              )}
                               {item.statusTag}
                             </span>
                           </div>
                         </div>
 
-                        <button 
+                        {!item.pending && <button
                           style={{
                             background: 'none', border: 'none', cursor: 'pointer',
                             color: theme.metaText, padding: '8px', borderRadius: '50%',
@@ -253,7 +253,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
                           title="Delete history"
                         >
                           <Trash2 size={16} strokeWidth={2} />
-                        </button>
+                        </button>}
 
                       </div>
 

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2, Star, MessageSquare } from 'lucide-react';
 import { api, friendlyMessage, ApiError } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
+import { getCookie } from '../../utils/cookies';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -172,7 +173,7 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
   );
 }
 
-function AudioPlayer({ audioId, audioDuration, isDark, userId }) {
+function AudioPlayer({ audioId, audioDuration, isDark, userId, autoPlay = false }) {
   const audioRef = useRef(null);
   const progressRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -219,14 +220,20 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId }) {
       if (audio.duration && isFinite(audio.duration)) {
         setDuration(audio.duration);
       }
-      
-      // Apply user playback speed setting
-      const savedSpeed = localStorage.getItem('vlk_playbackSpeed');
+
+      // Apply the playback speed saved in Settings > Audio & Playback
+      const savedSpeed = getCookie('vlk_playback_speed');
       if (savedSpeed) {
         audio.playbackRate = parseFloat(savedSpeed);
       }
-      
+
       setIsLoading(false);
+
+      // Auto-play newly generated responses, matching Settings > Audio & Playback
+      // > Auto-Play Audio (on by default). Never auto-play a reopened history item.
+      if (autoPlay && getCookie('vlk_autoplay') !== 'false') {
+        audio.play().then(() => setIsPlaying(true)).catch(() => {});
+      }
     };
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
     const onEnded = () => { setIsPlaying(false); setCurrentTime(0); };
@@ -249,7 +256,7 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId }) {
       audio.removeEventListener('canplay', onCanPlay);
       audio.removeEventListener('error', onError);
     };
-  }, [blobUrl]); // re-bind when blobUrl changes
+  }, [blobUrl, autoPlay]); // re-bind when blobUrl changes
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -438,7 +445,7 @@ function ThinkingBubble({ isDark }) {
   );
 }
 
-export default function ChatView({ t, isDark, initialMessage = '', initialHistoryItem = null, userData, onHistorySync }) {
+export default function ChatView({ t, isDark, initialMessage = '', initialHistoryItem = null, userData, onHistoryPending, onHistoryResolved }) {
   const [messages, setMessages] = useState([]);
   const [inputVal, setInputVal] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -536,6 +543,11 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       isThinking: true,
     }]);
 
+    // Show the question at the top of History right away, before the backend replies.
+    const historyTempId = `pending-${thinkingId}`;
+    const tracksHistory = !!userData?.userId;
+    if (tracksHistory) onHistoryPending?.(historyTempId, text);
+
     try {
       console.log('[ChatView] Sending to /api/ask:', { inputText: text, syllabusTopic: '', userId: userData?.userId || '' });
       const data = await api.post('/api/ask', {
@@ -545,12 +557,14 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       });
       console.log('[ChatView] Response:', data);
 
-      // A new query was saved server-side for this user — invalidate the
-      // cached History list so it refetches instead of showing a stale/empty state.
-      if (userData?.userId && onHistorySync) onHistorySync();
+      if (tracksHistory) onHistoryResolved?.(historyTempId, data);
 
       // Replace thinking bubble with the real response, revealed gradually
       const responseText = data.responseText || 'No response received.';
+      // Guests get text only, and a failed or disabled clip will not appear later,
+      // so only wait for audio when the backend says none is stored yet.
+      const waitForAudio = !data.audioId && !!data.answerId
+        && (!data.audioStatus || data.audioStatus === 'NOT_GENERATED');
       setMessages(prev => prev.map(msg =>
         msg.id === thinkingId
           ? {
@@ -561,18 +575,20 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
               answerId: data.answerId,
               audioId: data.audioId || null,
               audioDuration: data.audioDuration || null,
-              isAudioLoading: !data.audioId && data.answerId ? true : false,
+              isAudioLoading: waitForAudio,
+              isFresh: true,
             }
           : msg
       ));
       typeOutMessage(thinkingId, responseText);
 
       // If the backend didn't return audioId directly, try fetching it
-      if (!data.audioId && data.answerId) {
+      if (waitForAudio) {
         fetchAudioForMessage(thinkingId, data.answerId);
       }
     } catch (err) {
       console.error('[ChatView] Error:', err);
+      if (tracksHistory) onHistoryResolved?.(historyTempId, null);
       showError(friendlyMessage(err), 'error');
       // Replace thinking bubble with a brief inline note
       setMessages(prev => prev.map(msg =>
@@ -721,6 +737,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
                       audioDuration={msg.audioDuration}
                       isDark={isDark}
                       userId={userData?.userId}
+                      autoPlay={!!msg.isFresh}
                     />
                     <FeedbackWidget
                       audioId={msg.audioId}
