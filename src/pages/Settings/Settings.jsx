@@ -13,6 +13,8 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const [playbackSpeed, setPlaybackSpeed] = useState(getCookie('vlk_playback_speed') || '1.0');
   const [autoPlay, setAutoPlay] = useState(getCookie('vlk_autoplay') !== 'false');
   const [clearing, setClearing] = useState(false);
+  // Not signed in, or signed in as a guest — audio is not generated for guests
+  const isGuest = !userData || userData.role === 'GUEST';
 
   const colors = {
     bg: isDark ? 'rgba(30, 41, 59, 0.4)' : '#ffffff',
@@ -154,6 +156,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
       </SettingSection>
 
       {/* Audio & Playback */}
+      {!isGuest && (
       <SettingSection title="Audio & Playback" icon={Volume2}>
         <SettingRow
           label="Playback Speed"
@@ -197,9 +200,10 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
           }
         />
       </SettingSection>
+      )}
 
       {/* Data & Privacy */}
-      {userData?.role !== 'GUEST' && (
+      {!isGuest && (
         <SettingSection title="Data & Privacy" icon={Shield}>
           <SettingRow
             label="Export Data"
