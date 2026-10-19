@@ -1,0 +1,36 @@
+# VoiceLK
+
+> VoiceLK is a free AI study assistant for Sri Lankan O/Level (G.C.E. Ordinary Level) ICT students. Students ask a question in English, Sinhala or a mix of both, and VoiceLK answers in text and reads the answer aloud in natural Sinhala speech, produced by its own code-switched Sinhala/English text-to-speech model.
+
+VoiceLK is an academic research project. Its speech comes from a VITS model trained by the project on Sinhala and code-switched Sinhala/English speech, with its own text normalisation and grapheme-to-phoneme front-end, so English technical terms that appear inside Sinhala sentences (for example "RAM", "database", "IP address") are pronounced correctly.
+
+The web app is a single page at __SITE_URL__/. There are no other public pages; everything below happens inside that page.
+
+## What students can do
+
+- Ask about any topic on the O/Level ICT syllabus: computer fundamentals, number systems, data representation, databases, networking and the internet, programming logic and algorithms, and similar topics.
+- Get a written answer and a Sinhala audio narration of it, with play, pause, seek and download controls.
+- Change playback speed (0.75x to 1.5x) and turn auto-play on or off in Settings > Audio & Playback.
+- Choose between several Sinhala voices (signed-in accounts).
+- Keep chat history, rate audio answers and leave feedback (signed-in accounts).
+- Use light or dark mode.
+
+## Accounts
+
+- Guest: no sign-up needed. Guests can chat, browse Help and generate a small number of free audio answers in the default voice.
+- Signed-in: sign up with email or Google. Unlocks unlimited audio, voice choice, saved history, rating and data export.
+
+## Frequently asked questions
+
+- **Who is VoiceLK for?** O/Level ICT students in Sri Lanka who want to revise by listening, in Sinhala.
+- **Do I need an account?** No. Guests can start straight away; an account adds history, voice choice and unlimited audio.
+- **Which languages can I ask in?** English, Sinhala, or a mix of both.
+- **How do I hear an answer?** Press the play button under any answer. With auto-play on, new answers start playing by themselves.
+- **Can I delete my history?** Yes, from Settings > Data & Privacy > Clear Chat History. This cannot be undone.
+- **What does VoiceLK store in cookies?** Only theme, language, voice, playback speed and auto-play preferences, and only after the visitor accepts cookies.
+
+## Links
+
+- [VoiceLK web app](__SITE_URL__/): Ask an ICT question and listen to the answer in Sinhala.
+- [Social preview image](__SITE_URL__/og.png): Brand image used when the site is shared.
+- [Sitemap](__SITE_URL__/sitemap.xml)
