@@ -3,6 +3,7 @@ import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2, Star, M
 import { api, friendlyMessage, ApiError } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { getCookie } from '../../utils/cookies';
+import { useVoices, loadVoices, preferredVoice } from '../../hooks/useVoices';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -452,6 +453,15 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
   const messagesEndRef = useRef(null);
   const initialSentRef = useRef(false);
   const { showError } = useError();
+  // Guests get text answers only, so they have no voice to choose.
+  const isGuest = !userData || userData.role === 'GUEST';
+  const { voices } = useVoices();
+  // Starts from the voice saved in Settings; changing it here affects this chat only.
+  const [voiceModel, setVoiceModel] = useState('');
+
+  useEffect(() => {
+    if (voices.length) setVoiceModel(current => current || preferredVoice(voices));
+  }, [voices]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -549,12 +559,19 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
     if (tracksHistory) onHistoryPending?.(historyTempId, text);
 
     try {
-      console.log('[ChatView] Sending to /api/ask:', { inputText: text, syllabusTopic: '', userId: userData?.userId || '' });
-      const data = await api.post('/api/ask', {
+      // A question sent straight from Home can arrive before the voice list has
+      // loaded, so the list is awaited here rather than read from state.
+      const voice = isGuest
+        ? ''
+        : voiceModel || preferredVoice(await loadVoices().catch(() => []));
+      const payload = {
         inputText: text,
         syllabusTopic: '',
         userId: userData?.userId || '',
-      });
+        ...(voice ? { voiceModel: voice } : {}),
+      };
+      console.log('[ChatView] Sending to /api/ask:', payload);
+      const data = await api.post('/api/ask', payload);
       console.log('[ChatView] Response:', data);
 
       if (tracksHistory) onHistoryResolved?.(historyTempId, data);
@@ -794,6 +811,29 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
               opacity: isSending ? 0.6 : 1,
             }}
           />
+
+          {!isGuest && voices.length > 0 && (
+            <select
+              value={voiceModel}
+              onChange={(e) => setVoiceModel(e.target.value)}
+              disabled={isSending}
+              title={voices.find(v => v.key === voiceModel)?.description || 'Voice for the audio answer'}
+              aria-label="Voice"
+              style={{
+                flexShrink: 0, maxWidth: 140,
+                padding: '4px 8px', borderRadius: 9999,
+                border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`,
+                background: isDark ? '#0f172a' : '#f9fafb',
+                color: isDark ? '#cbd5e1' : '#374151',
+                fontSize: 13, fontFamily: 'inherit', outline: 'none',
+                cursor: isSending ? 'default' : 'pointer',
+              }}
+            >
+              {voices.map(v => (
+                <option key={v.key} value={v.key}>{v.name}</option>
+              ))}
+            </select>
+          )}
 
           <button
             type="submit"

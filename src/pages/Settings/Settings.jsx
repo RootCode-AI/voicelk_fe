@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Moon, Sun, Monitor, Trash2, Download, Shield, Volume2 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { useCookieConsent } from '../../context/CookieConsentContext';
 import { useConfirm } from '../../context/ConfirmContext';
 import { getCookie, setCookie } from '../../utils/cookies';
+import { useVoices, preferredVoice, VOICE_COOKIE } from '../../hooks/useVoices';
 
 export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const { showError } = useError();
   const { hasConsent } = useCookieConsent();
   const confirm = useConfirm();
+  const { voices, loading: voicesLoading } = useVoices();
+  const [voiceModel, setVoiceModel] = useState('');
   const [playbackSpeed, setPlaybackSpeed] = useState(getCookie('vlk_playback_speed') || '1.0');
   const [autoPlay, setAutoPlay] = useState(getCookie('vlk_autoplay') !== 'false');
   const [clearing, setClearing] = useState(false);
@@ -24,6 +27,18 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
     textMuted: isDark ? '#94a3b8' : '#64748b',
     primary: isDark ? '#38bdf8' : '#0ea5e9',
     danger: isDark ? '#ef4444' : '#dc2626',
+  };
+
+  // The list arrives after the first render; pick the saved voice once it is known.
+  useEffect(() => {
+    if (voices.length) setVoiceModel(preferredVoice(voices));
+  }, [voices]);
+
+  const handleVoiceChange = (key) => {
+    setVoiceModel(key);
+    if (hasConsent) {
+      setCookie(VOICE_COOKIE, key);
+    }
   };
 
   const handleSpeedChange = (speed) => {
@@ -158,6 +173,32 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
       {/* Audio & Playback */}
       {!isGuest && (
       <SettingSection title="Audio & Playback" icon={Volume2}>
+        <SettingRow
+          label="Voice"
+          description={voices.find(v => v.key === voiceModel)?.description
+            || 'The voice used to read answers aloud.'}
+          control={
+            <select
+              value={voiceModel}
+              onChange={(e) => handleVoiceChange(e.target.value)}
+              disabled={voicesLoading || !voices.length}
+              style={{
+                padding: '8px 12px', borderRadius: 8, border: `1px solid ${colors.border}`,
+                background: isDark ? 'rgba(0,0,0,0.2)' : '#fff', color: colors.text,
+                outline: 'none', cursor: voices.length ? 'pointer' : 'not-allowed', minWidth: 140
+              }}
+            >
+              {!voices.length && (
+                <option value="">{voicesLoading ? 'Loading...' : 'Unavailable'}</option>
+              )}
+              {voices.map(v => (
+                <option key={v.key} value={v.key}>
+                  {v.name}{v.defaultVoice ? ' (Default)' : ''}
+                </option>
+              ))}
+            </select>
+          }
+        />
         <SettingRow
           label="Playback Speed"
           description="Default speed for AI voice responses."
