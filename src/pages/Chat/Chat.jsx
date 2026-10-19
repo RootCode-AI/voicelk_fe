@@ -3,6 +3,8 @@ import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2, Star, M
 import { api, friendlyMessage, ApiError } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { getCookie } from '../../utils/cookies';
+import { useVoices, loadVoices, preferredVoice } from '../../hooks/useVoices';
+import { getToken, expireSession } from '../../services/session';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -189,11 +191,12 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId, autoPlay = false 
     let objectUrl = null;
     const fetchAudio = async () => {
       try {
-        const token = localStorage.getItem('voicelk_token');
+        const token = getToken();
         const headers = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const response = await fetch(streamUrl, { headers });
+        if (response.status === 401 && token) expireSession();
         if (!response.ok) throw new Error('Failed to fetch audio');
         
         const blob = await response.blob();
@@ -452,6 +455,15 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
   const messagesEndRef = useRef(null);
   const initialSentRef = useRef(false);
   const { showError } = useError();
+  // Guests' free clips always use the default voice, so they have no voice to choose.
+  const isGuest = !userData || userData.role === 'GUEST';
+  const { voices } = useVoices();
+  // Starts from the voice saved in Settings; changing it here affects this chat only.
+  const [voiceModel, setVoiceModel] = useState('');
+
+  useEffect(() => {
+    if (voices.length) setVoiceModel(current => current || preferredVoice(voices));
+  }, [voices]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -533,6 +545,23 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       });
   }, []);
 
+  // Guests get a few free clips; after each one, say how many are left.
+  const announceGuestAllowance = (data) => {
+    const remaining = data.guestAudioRemaining;
+    if (remaining == null) return;
+    const clips = (n) => `${n} more audio${n === 1 ? '' : 's'}`;
+
+    if (data.audioStatus === 'GUEST_LIMIT_REACHED') {
+      showError(`You have used all ${data.guestAudioLimit} free audios. Sign in to keep generating audio.`,
+        'warning', { title: 'Free audio limit reached' });
+    } else if (data.audioId) {
+      showError(remaining > 0
+        ? `You can generate ${clips(remaining)} as a guest. Sign in for unlimited audio.`
+        : 'That was your last free audio. Sign in to keep generating audio.',
+        'info', { title: 'Free audio' });
+    }
+  };
+
   const sendToBackend = async (text) => {
     // Add a "thinking" placeholder
     const thinkingId = Date.now() + 1;
@@ -549,20 +578,27 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
     if (tracksHistory) onHistoryPending?.(historyTempId, text);
 
     try {
-      console.log('[ChatView] Sending to /api/ask:', { inputText: text, syllabusTopic: '', userId: userData?.userId || '' });
-      const data = await api.post('/api/ask', {
+      // A question sent straight from Home can arrive before the voice list has
+      // loaded, so the list is awaited here rather than read from state.
+      const voice = isGuest
+        ? ''
+        : voiceModel || preferredVoice(await loadVoices().catch(() => []));
+      const payload = {
         inputText: text,
         syllabusTopic: '',
         userId: userData?.userId || '',
-      });
+        ...(voice ? { voiceModel: voice } : {}),
+      };
+      console.log('[ChatView] Sending to /api/ask:', payload);
+      const data = await api.post('/api/ask', payload);
       console.log('[ChatView] Response:', data);
 
       if (tracksHistory) onHistoryResolved?.(historyTempId, data);
 
       // Replace thinking bubble with the real response, revealed gradually
       const responseText = data.responseText || 'No response received.';
-      // Guests get text only, and a failed or disabled clip will not appear later,
-      // so only wait for audio when the backend says none is stored yet.
+      // A guest past the free limit gets text only, and a failed or disabled clip will
+      // not appear later, so only wait for audio when the backend says none is stored yet.
       const waitForAudio = !data.audioId && !!data.answerId
         && (!data.audioStatus || data.audioStatus === 'NOT_GENERATED');
       setMessages(prev => prev.map(msg =>
@@ -581,6 +617,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
           : msg
       ));
       typeOutMessage(thinkingId, responseText);
+      announceGuestAllowance(data);
 
       // If the backend didn't return audioId directly, try fetching it
       if (waitForAudio) {
@@ -794,6 +831,29 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
               opacity: isSending ? 0.6 : 1,
             }}
           />
+
+          {!isGuest && voices.length > 0 && (
+            <select
+              value={voiceModel}
+              onChange={(e) => setVoiceModel(e.target.value)}
+              disabled={isSending}
+              title={voices.find(v => v.key === voiceModel)?.description || 'Voice for the audio answer'}
+              aria-label="Voice"
+              style={{
+                flexShrink: 0, maxWidth: 140,
+                padding: '4px 8px', borderRadius: 9999,
+                border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`,
+                background: isDark ? '#0f172a' : '#f9fafb',
+                color: isDark ? '#cbd5e1' : '#374151',
+                fontSize: 13, fontFamily: 'inherit', outline: 'none',
+                cursor: isSending ? 'default' : 'pointer',
+              }}
+            >
+              {voices.map(v => (
+                <option key={v.key} value={v.key}>{v.name}</option>
+              ))}
+            </select>
+          )}
 
           <button
             type="submit"

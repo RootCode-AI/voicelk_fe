@@ -1,4 +1,5 @@
 import { getHttpErrorMessage } from '../context/ErrorContext';
+import { getToken, isTokenExpired, expireSession } from './session';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -10,7 +11,13 @@ export async function apiFetch(endpoint, options = {}) {
     ...options.headers,
   };
 
-  const token = localStorage.getItem('voicelk_token');
+  let token = getToken();
+  if (token && isTokenExpired(token)) {
+    // Sending a dead token would only earn a 401; end the session now and let
+    // the request go out unauthenticated, as public endpoints still answer.
+    expireSession();
+    token = null;
+  }
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   let response;
@@ -25,6 +32,10 @@ export async function apiFetch(endpoint, options = {}) {
   }
 
   if (!response.ok) {
+    // The server refused a token the client still held: the session is over
+    // (expired, or signed with a key the server no longer accepts).
+    if (response.status === 401 && token) expireSession();
+
     let serverMessage = '';
     try {
       const body = await response.json();

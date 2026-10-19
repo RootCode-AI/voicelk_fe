@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import voiceLKIcon from '../../../assets/images/voicelk-icon.png';
+import voiceLKLogo from '../../../assets/images/voicelk-logo.png';
+import voiceLKLogoWhite from '../../../assets/images/voicelk-logo-white.png';
 import { Mail, Lock, User, Eye, EyeOff, Mic2, Loader2 } from 'lucide-react';
 import { api, friendlyMessage } from '../../../services/api';
 import { useError } from '../../../context/ErrorContext';
@@ -20,7 +21,7 @@ const LIGHT = {
   card: '#ffffff',
   cardBorder: 'rgba(0,0,0,0.06)',
   cardShadow: '0 20px 60px rgba(99,102,241,0.12), 0 4px 16px rgba(0,0,0,0.06)',
-  logoText: '#1e293b',
+  logo: voiceLKLogo,
   subtitle: '#64748b',
   googleBg: '#ffffff',
   googleBorder: '#e2e8f0',
@@ -60,7 +61,7 @@ const DARK = {
   card: 'rgba(10,20,40,0.85)',
   cardBorder: 'rgba(255,255,255,0.07)',
   cardShadow: '0 32px 80px rgba(0,0,0,0.6)',
-  logoText: '#f1f5f9',
+  logo: voiceLKLogoWhite,
   subtitle: '#64748b',
   googleBg: 'rgba(255,255,255,0.05)',
   googleBorder: 'rgba(255,255,255,0.10)',
@@ -438,26 +439,10 @@ export default function AuthPage({ onLogin, isDark = false }) {
                   marginBottom: 6,
                 }}>
                   <img
-                    src={voiceLKIcon}
-                    alt="VoiceLK icon"
-                    style={{
-                      width: 34,
-                      height: 34,
-                      objectFit: 'contain',
-                      
-                      mixBlendMode: isDark ? 'screen' : 'normal',
-                      filter: isDark ? 'brightness(1.15)' : 'none',
-                    }}
+                    src={t.logo}
+                    alt="VoiceLK"
+                    style={{ height: 40, width: 'auto', display: 'block' }}
                   />
-                  <span style={{
-                    fontSize: 26,
-                    fontWeight: 700,
-                    letterSpacing: '-0.5px',
-                    color: t.logoText,
-                    lineHeight: 1,
-                  }}>
-                    VoiceLK
-                  </span>
                 </div>
               </div>
 

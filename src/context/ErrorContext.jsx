@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
-import voiceLKIcon from '../assets/images/voicelk-icon.png';
+// Toasts always sit on a light tinted card, so the dark mark is used in both themes.
+import voiceLKIcon from '../assets/images/voicelk-mark.png';
 
 const ErrorContext = createContext(null);
 
