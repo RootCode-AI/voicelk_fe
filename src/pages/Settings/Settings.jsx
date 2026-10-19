@@ -5,6 +5,7 @@ import { useError } from '../../context/ErrorContext';
 import { useCookieConsent } from '../../context/CookieConsentContext';
 import { useConfirm } from '../../context/ConfirmContext';
 import { getCookie, setCookie } from '../../utils/cookies';
+import { getPlaybackSpeed, savePlaybackSpeed } from '../../utils/playback';
 import { useVoices, preferredVoice, VOICE_COOKIE } from '../../hooks/useVoices';
 
 export default function SettingsView({ isDark, onToggleDark, userData, t }) {
@@ -13,11 +14,11 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const confirm = useConfirm();
   const { voices, loading: voicesLoading } = useVoices();
   const [voiceModel, setVoiceModel] = useState('');
-  const [playbackSpeed, setPlaybackSpeed] = useState(getCookie('vlk_playback_speed') || '1.0');
+  const [playbackSpeed, setPlaybackSpeed] = useState(getPlaybackSpeed);
   const [autoPlay, setAutoPlay] = useState(getCookie('vlk_autoplay') !== 'false');
   const [clearing, setClearing] = useState(false);
   // Not signed in, or signed in as a guest — guests get a few clips in the default
-  // voice only, so there is nothing for them to set here
+  // voice only, so playback speed is the one audio setting they can change
   const isGuest = !userData || userData.role === 'GUEST';
 
   const colors = {
@@ -44,9 +45,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
 
   const handleSpeedChange = (speed) => {
     setPlaybackSpeed(speed);
-    if (hasConsent) {
-      setCookie('vlk_playback_speed', speed);
-    }
+    savePlaybackSpeed(speed, hasConsent);
   };
 
   const handleAutoPlayToggle = () => {
@@ -172,8 +171,8 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
       </SettingSection>
 
       {/* Audio & Playback */}
-      {!isGuest && (
       <SettingSection title="Audio & Playback" icon={Volume2}>
+        {!isGuest && (
         <SettingRow
           label="Voice"
           description={voices.find(v => v.key === voiceModel)?.description
@@ -200,6 +199,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
             </select>
           }
         />
+        )}
         <SettingRow
           label="Playback Speed"
           description="Default speed for AI voice responses."
@@ -220,6 +220,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
             </select>
           }
         />
+        {!isGuest && (
         <SettingRow
           label="Auto-Play Audio"
           description="Automatically play audio responses when generated."
@@ -241,8 +242,8 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
             </button>
           }
         />
+        )}
       </SettingSection>
-      )}
 
       {/* Data & Privacy */}
       {!isGuest && (

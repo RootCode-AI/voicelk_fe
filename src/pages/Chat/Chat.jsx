@@ -3,6 +3,7 @@ import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2, Star, M
 import { api, friendlyMessage, ApiError } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { getCookie } from '../../utils/cookies';
+import { getPlaybackSpeed } from '../../utils/playback';
 import { useVoices, loadVoices, preferredVoice } from '../../hooks/useVoices';
 import { getToken, expireSession } from '../../services/session';
 
@@ -224,11 +225,8 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId, autoPlay = false 
         setDuration(audio.duration);
       }
 
-      // Apply the playback speed saved in Settings > Audio & Playback
-      const savedSpeed = getCookie('vlk_playback_speed');
-      if (savedSpeed) {
-        audio.playbackRate = parseFloat(savedSpeed);
-      }
+      // Apply the playback speed chosen in Settings > Audio & Playback
+      audio.playbackRate = parseFloat(getPlaybackSpeed());
 
       setIsLoading(false);
 
