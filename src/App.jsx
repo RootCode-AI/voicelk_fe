@@ -7,20 +7,27 @@ import { ErrorProvider, useError } from './context/ErrorContext';
 import { CookieConsentProvider, useCookieConsent } from './context/CookieConsentContext';
 import { ConfirmProvider } from './context/ConfirmContext';
 import { getCookie, setCookie } from './utils/cookies';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './services/firebase';
+import {
+  TOKEN_KEY, USER_KEY, SESSION_EXPIRED_EVENT,
+  clearSession, expireSession, getToken, isTokenExpired, tokenExpiry,
+} from './services/session';
+
+// setTimeout fires immediately for delays above 2^31-1 ms, so long waits are capped
+// and simply re-armed when the effect runs again.
+const MAX_TIMER_MS = 2 ** 31 - 1;
 
 function loadStoredSession() {
   try {
-    const token = localStorage.getItem('voicelk_token');
-    const storedUser = localStorage.getItem('voicelk_user');
-    if (token && storedUser) {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const storedUser = localStorage.getItem(USER_KEY);
+    // A session that ran out while the tab was closed is not restored.
+    if (token && storedUser && !isTokenExpired(token)) {
       return { isAuthenticated: true, userData: JSON.parse(storedUser) };
     }
-  } catch (_) {
-    localStorage.removeItem('voicelk_token');
-    localStorage.removeItem('voicelk_user');
-  }
+  } catch { /* unreadable session — fall through and clear it */ }
+  clearSession();
   return { isAuthenticated: false, userData: null };
 }
 
@@ -96,7 +103,7 @@ function AppInner() {
       setUserData(prev => {
         if (!prev || prev.avatar || prev.email !== fbUser.email) return prev;
         const next = { ...prev, avatar: photo, userName: prev.userName || fbUser.displayName || prev.userName };
-        localStorage.setItem('voicelk_user', JSON.stringify(next));
+        localStorage.setItem(USER_KEY, JSON.stringify(next));
         return next;
       });
     });
@@ -108,12 +115,52 @@ function AppInner() {
     setShowLogin(false);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('voicelk_token');
-    localStorage.removeItem('voicelk_user');
+  const signOutLocally = () => {
     setUserData(null);
     setIsAuthenticated(false);
+    // Google sign-ins also leave a Firebase session in the browser; end it too so
+    // the next sign-in starts clean.
+    signOut(auth).catch(() => {});
   };
+
+  const handleLogout = () => {
+    clearSession();
+    signOutLocally();
+  };
+
+  // A session that ends on its own (expiry, or a token the server refuses) signs
+  // the user out of the UI and asks them to sign in again.
+  useEffect(() => {
+    const onExpired = () => {
+      signOutLocally();
+      setShowLogin(true);
+      showError('Your session has expired. Please sign in again.', 'warning', { title: 'Session expired' });
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, [showError]);
+
+  // End the session at the moment the token expires, even if the user makes no
+  // request; a request made after that would be refused anyway.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const expiry = tokenExpiry(getToken() || '');
+    if (expiry === null) return;
+    const timer = setTimeout(expireSession, Math.min(Math.max(expiry - Date.now(), 0), MAX_TIMER_MS));
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, userData]);
+
+  // Keep every open tab in step: signing in or out in one tab applies to all.
+  useEffect(() => {
+    const onStorage = (event) => {
+      if (event.key !== TOKEN_KEY && event.key !== null) return;
+      const session = loadStoredSession();
+      setIsAuthenticated(session.isAuthenticated);
+      setUserData(session.userData);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   return (
     <ConfirmProvider isDark={isDark}>

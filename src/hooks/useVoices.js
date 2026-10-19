@@ -10,12 +10,23 @@ export const VOICE_COOKIE = 'vlk_voice_model';
 let voicesCache = null;
 let voicesRequest = null;
 
+// Keys of the models the bridge can serve right now, or null when that is unknown
+// (bridge down or unreachable) — then no voice is hidden on its account.
+function loadServedModels() {
+  return api.get('/api/tts/models')
+    .then(data => Array.isArray(data?.models) ? new Set(data.models.map(m => m.key)) : null)
+    .catch(() => null);
+}
+
 export function loadVoices() {
   if (voicesCache) return Promise.resolve(voicesCache);
   if (!voicesRequest) {
-    voicesRequest = api.get('/api/tts/voices')
-      .then(data => {
-        voicesCache = Array.isArray(data) ? data : [];
+    voicesRequest = Promise.all([api.get('/api/tts/voices'), loadServedModels()])
+      .then(([data, served]) => {
+        const offered = Array.isArray(data) ? data : [];
+        // A voice the backend lists but the bridge does not serve would only fail,
+        // so it is left out of the picker.
+        voicesCache = served ? offered.filter(v => served.has(v.key)) : offered;
         return voicesCache;
       })
       .finally(() => { voicesRequest = null; });

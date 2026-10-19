@@ -4,6 +4,7 @@ import { api, friendlyMessage, ApiError } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { getCookie } from '../../utils/cookies';
 import { useVoices, loadVoices, preferredVoice } from '../../hooks/useVoices';
+import { getToken, expireSession } from '../../services/session';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -190,11 +191,12 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId, autoPlay = false 
     let objectUrl = null;
     const fetchAudio = async () => {
       try {
-        const token = localStorage.getItem('voicelk_token');
+        const token = getToken();
         const headers = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const response = await fetch(streamUrl, { headers });
+        if (response.status === 401 && token) expireSession();
         if (!response.ok) throw new Error('Failed to fetch audio');
         
         const blob = await response.blob();
@@ -453,7 +455,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
   const messagesEndRef = useRef(null);
   const initialSentRef = useRef(false);
   const { showError } = useError();
-  // Guests get text answers only, so they have no voice to choose.
+  // Guests' free clips always use the default voice, so they have no voice to choose.
   const isGuest = !userData || userData.role === 'GUEST';
   const { voices } = useVoices();
   // Starts from the voice saved in Settings; changing it here affects this chat only.
@@ -543,6 +545,23 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       });
   }, []);
 
+  // Guests get a few free clips; after each one, say how many are left.
+  const announceGuestAllowance = (data) => {
+    const remaining = data.guestAudioRemaining;
+    if (remaining == null) return;
+    const clips = (n) => `${n} more audio${n === 1 ? '' : 's'}`;
+
+    if (data.audioStatus === 'GUEST_LIMIT_REACHED') {
+      showError(`You have used all ${data.guestAudioLimit} free audios. Sign in to keep generating audio.`,
+        'warning', { title: 'Free audio limit reached' });
+    } else if (data.audioId) {
+      showError(remaining > 0
+        ? `You can generate ${clips(remaining)} as a guest. Sign in for unlimited audio.`
+        : 'That was your last free audio. Sign in to keep generating audio.',
+        'info', { title: 'Free audio' });
+    }
+  };
+
   const sendToBackend = async (text) => {
     // Add a "thinking" placeholder
     const thinkingId = Date.now() + 1;
@@ -578,8 +597,8 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
 
       // Replace thinking bubble with the real response, revealed gradually
       const responseText = data.responseText || 'No response received.';
-      // Guests get text only, and a failed or disabled clip will not appear later,
-      // so only wait for audio when the backend says none is stored yet.
+      // A guest past the free limit gets text only, and a failed or disabled clip will
+      // not appear later, so only wait for audio when the backend says none is stored yet.
       const waitForAudio = !data.audioId && !!data.answerId
         && (!data.audioStatus || data.audioStatus === 'NOT_GENERATED');
       setMessages(prev => prev.map(msg =>
@@ -598,6 +617,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
           : msg
       ));
       typeOutMessage(thinkingId, responseText);
+      announceGuestAllowance(data);
 
       // If the backend didn't return audioId directly, try fetching it
       if (waitForAudio) {

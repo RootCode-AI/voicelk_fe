@@ -16,7 +16,8 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const [playbackSpeed, setPlaybackSpeed] = useState(getCookie('vlk_playback_speed') || '1.0');
   const [autoPlay, setAutoPlay] = useState(getCookie('vlk_autoplay') !== 'false');
   const [clearing, setClearing] = useState(false);
-  // Not signed in, or signed in as a guest — audio is not generated for guests
+  // Not signed in, or signed in as a guest — guests get a few clips in the default
+  // voice only, so there is nothing for them to set here
   const isGuest = !userData || userData.role === 'GUEST';
 
   const colors = {

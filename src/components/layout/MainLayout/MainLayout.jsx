@@ -11,7 +11,10 @@ import {
   LogIn,
   LogOut,
 } from 'lucide-react';
-import voiceLKIcon from '../../../assets/images/voicelk-icon.png';
+import voiceLKMark from '../../../assets/images/voicelk-mark.png';
+import voiceLKMarkWhite from '../../../assets/images/voicelk-mark-white.png';
+import voiceLKLogo from '../../../assets/images/voicelk-logo.png';
+import voiceLKLogoWhite from '../../../assets/images/voicelk-logo-white.png';
 import { api } from '../../../services/api';
 import HomeView from '../../../pages/Home/Home';
 import ProfileView from '../../../pages/Profile/Profile';
@@ -25,7 +28,8 @@ const LIGHT = {
   pageBg: '#f0f4fa',
   sidebarBg: '#f8fafc',
   sidebarBorder: '#e5e7eb',
-  logoText: '#1d4ed8',
+  logoMark: voiceLKMark,
+  logoFull: voiceLKLogo,
   newChatBg: '#eff6ff',
   newChatBgHover: '#dbeafe',
   newChatText: '#1d4ed8',
@@ -64,7 +68,8 @@ const DARK = {
   pageBg: '#060f1e',
   sidebarBg: 'rgba(8,18,38,0.97)',
   sidebarBorder: 'rgba(255,255,255,0.07)',
-  logoText: '#38bdf8',
+  logoMark: voiceLKMarkWhite,
+  logoFull: voiceLKLogoWhite,
   newChatBg: 'rgba(0,212,255,0.08)',
   newChatBgHover: 'rgba(0,212,255,0.16)',
   newChatText: '#38bdf8',
@@ -107,6 +112,15 @@ const NAV_BOTTOM = [
   { id: 'settings', label: 'Settings', Icon: Settings },
   { id: 'help',     label: 'Help',     Icon: HelpCircle },
 ];
+
+const PAGE_TITLES = {
+  new_chat: 'Chat',
+  chat: 'Chat',
+  history: 'History',
+  profile: 'Profile',
+  settings: 'Settings',
+  help: 'Help',
+};
 
 function IconBtn({ onClick, title, children, t, style = {} }) {
   return (
@@ -277,7 +291,7 @@ function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat, 
           onMouseLeave={() => setLogoHover(false)}
         >
           <span style={{ width: 26, height: 26, position: 'relative', display: 'block' }}>
-            <img src={voiceLKIcon} alt="VoiceLK"
+            <img src={t.logoMark} alt="VoiceLK"
               style={{
                 position: 'absolute', inset: 0, width: 26, height: 26, objectFit: 'contain',
                 opacity: logoHover ? 0 : 1,
@@ -361,14 +375,8 @@ function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClic
           style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
           title="Open Chat"
         >
-          <img src={voiceLKIcon} alt="VoiceLK"
-            style={{ width: 26, height: 26, objectFit: 'contain' }} />
-          <span style={{
-            fontSize: 16, fontWeight: 700,
-            color: t.logoText, letterSpacing: '-0.3px',
-          }}>
-            VoiceLK
-          </span>
+          <img src={t.logoFull} alt="VoiceLK"
+            style={{ height: 24, width: 'auto', display: 'block' }} />
         </div>
 
         <Tooltip label="Close sidebar">
@@ -534,6 +542,12 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
     try {
       sessionStorage.setItem('vlk_active_nav', activeNav);
     } catch (_) { /* storage unavailable, ignore */ }
+  }, [activeNav]);
+
+  // Browser tab title, e.g. "VoiceLK | Chat"; a new chat and an open one are both Chat.
+  useEffect(() => {
+    const page = PAGE_TITLES[activeNav] || 'Chat';
+    document.title = `VoiceLK | ${page}`;
   }, [activeNav]);
 
   // Redirect away from profile if logged out
