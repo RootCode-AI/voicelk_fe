@@ -6,7 +6,7 @@ import { useCookieConsent } from '../../context/CookieConsentContext';
 import { useConfirm } from '../../context/ConfirmContext';
 import { getCookie, setCookie } from '../../utils/cookies';
 import { getPlaybackSpeed, savePlaybackSpeed } from '../../utils/playback';
-import { useVoices, preferredVoice, VOICE_COOKIE } from '../../hooks/useVoices';
+import { useVoices, preferredVoice, voiceLabel, VOICE_COOKIE } from '../../hooks/useVoices';
 
 export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const { showError } = useError();
@@ -192,9 +192,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
                 <option value="">{voicesLoading ? 'Loading...' : 'Unavailable'}</option>
               )}
               {voices.map(v => (
-                <option key={v.key} value={v.key}>
-                  {v.name}{v.defaultVoice ? ' (Default)' : ''}
-                </option>
+                <option key={v.key} value={v.key}>{voiceLabel(v)}</option>
               ))}
             </select>
           }

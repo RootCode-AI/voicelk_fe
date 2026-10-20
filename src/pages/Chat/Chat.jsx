@@ -4,7 +4,7 @@ import { api, friendlyMessage, ApiError } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { getCookie } from '../../utils/cookies';
 import { getPlaybackSpeed } from '../../utils/playback';
-import { useVoices, loadVoices, preferredVoice } from '../../hooks/useVoices';
+import { useVoices, loadVoices, preferredVoice, voiceLabel } from '../../hooks/useVoices';
 import { getToken, expireSession } from '../../services/session';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -838,7 +838,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
               title={voices.find(v => v.key === voiceModel)?.description || 'Voice for the audio answer'}
               aria-label="Voice"
               style={{
-                flexShrink: 0, maxWidth: 140,
+                flexShrink: 0, maxWidth: 180,
                 padding: '4px 8px', borderRadius: 9999,
                 border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`,
                 background: isDark ? '#0f172a' : '#f9fafb',
@@ -848,7 +848,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
               }}
             >
               {voices.map(v => (
-                <option key={v.key} value={v.key}>{v.name}</option>
+                <option key={v.key} value={v.key}>{voiceLabel(v)}</option>
               ))}
             </select>
           )}

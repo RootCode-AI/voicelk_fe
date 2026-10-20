@@ -42,6 +42,11 @@ export function preferredVoice(voices) {
   return voices.find(v => v.defaultVoice)?.key || '';
 }
 
+// What the voice pickers show for a voice, marking the backend's default one.
+export function voiceLabel(voice) {
+  return voice.defaultVoice ? `${voice.name} (default)` : voice.name;
+}
+
 export function useVoices() {
   const [voices, setVoices] = useState(() => voicesCache || []);
   const [loading, setLoading] = useState(!voicesCache);
