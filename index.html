@@ -1,16 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-LK">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VoiceLK | Sinhala Voice AI Study Assistant for O/L ICT</title>
-    <meta name="description" content="Ask O/Level ICT questions in English or Sinhala and hear the answers read aloud in natural Sinhala speech. Free AI study assistant for Sri Lankan students." />
-    <meta name="keywords" content="VoiceLK, Sinhala text to speech, Sinhala TTS, O/L ICT, O/Level ICT, ICT Sinhala, AI study assistant, Sri Lanka, සිංහල, තොරතුරු හා සන්නිවේදන තාක්ෂණය" />
+    <title>__SITE_TITLE__</title>
+    <meta name="description" content="__SITE_DESCRIPTION__" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="application-name" content="VoiceLK" />
     <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href="__SITE_URL__/" />
+    <link rel="sitemap" type="application/xml" href="__SITE_URL__/sitemap.xml" />
 
     <link rel="icon" type="image/x-icon" href="/src/assets/images/voicelk-icon.ico" />
     <link rel="apple-touch-icon" href="/src/assets/images/apple-touch-icon.png" />
@@ -19,60 +19,92 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="VoiceLK" />
     <meta property="og:url" content="__SITE_URL__/" />
-    <meta property="og:title" content="VoiceLK | Ask O/L ICT questions, hear answers in Sinhala" />
-    <meta property="og:description" content="Free AI study assistant for Sri Lankan O/Level ICT students. Ask in English or Sinhala and listen to every answer in natural Sinhala speech." />
-    <meta property="og:image" content="__SITE_URL__/og.png" />
+    <meta property="og:title" content="__SITE_TITLE__" />
+    <meta property="og:description" content="__SITE_DESCRIPTION__" />
+    <meta property="og:image" content="__SITE_URL__/og.png?v=code-switched-tts" />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="VoiceLK: Ask O/L ICT questions. Hear answers in Sinhala." />
-    <meta property="og:locale" content="en_US" />
+    <meta property="og:image:width" content="1731" />
+    <meta property="og:image:height" content="909" />
+    <meta property="og:image:alt" content="VoiceLK: Sinhala-English code-switched speech. Neural text-to-speech with VITS." />
+    <meta property="og:locale" content="en_LK" />
     <meta property="og:locale:alternate" content="si_LK" />
 
     <!-- X (Twitter) card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="VoiceLK | Ask O/L ICT questions, hear answers in Sinhala" />
-    <meta name="twitter:description" content="Free AI study assistant for Sri Lankan O/Level ICT students, with answers read aloud in natural Sinhala speech." />
-    <meta name="twitter:image" content="__SITE_URL__/og.png" />
-    <meta name="twitter:image:alt" content="VoiceLK: Ask O/L ICT questions. Hear answers in Sinhala." />
+    <meta name="twitter:title" content="__SITE_TITLE__" />
+    <meta name="twitter:description" content="__SITE_DESCRIPTION__" />
+    <meta name="twitter:image" content="__SITE_URL__/og.png?v=code-switched-tts" />
+    <meta name="twitter:image:alt" content="VoiceLK: Sinhala-English code-switched speech. Neural text-to-speech with VITS." />
 
     <!-- Plain-text summary for AI assistants: https://llmstxt.org -->
     <link rel="alternate" type="text/plain" title="LLM summary" href="/llms.txt" />
 
     <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "VoiceLK",
-        "url": "__SITE_URL__/",
-        "image": "__SITE_URL__/og.png",
-        "description": "AI study assistant for Sri Lankan O/Level ICT students that answers questions in text and reads the answers aloud in natural Sinhala speech.",
-        "applicationCategory": "EducationalApplication",
-        "operatingSystem": "Any (web browser)",
-        "browserRequirements": "Requires JavaScript",
-        "inLanguage": ["en", "si"],
-        "isAccessibleForFree": true,
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "LKR" },
-        "audience": {
-          "@type": "EducationalAudience",
-          "educationalRole": "student",
-          "audienceType": "G.C.E. O/Level ICT students in Sri Lanka"
-        },
-        "featureList": [
-          "Answers O/Level ICT questions asked in English or Sinhala",
-          "Reads every answer aloud in Sinhala speech",
-          "Adjustable playback speed and auto-play",
-          "Choice of Sinhala voices for signed-in users",
-          "Saved chat history for signed-in users"
-        ]
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "__SITE_URL__/#website",
+      "name": "VoiceLK",
+      "alternateName": "Voice LK",
+      "url": "__SITE_URL__/",
+      "inLanguage": [
+        "en",
+        "si"
+      ],
+      "publisher": {
+        "@id": "https://voicelk.dev/#organization"
       }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://voicelk.dev/#organization",
+      "name": "VoiceLK",
+      "url": "https://voicelk.dev/",
+      "logo": "https://voicelk.dev/icon-512.png"
+    },
+    {
+      "@type": "WebApplication",
+      "name": "VoiceLK",
+      "url": "__SITE_URL__/",
+      "image": "__SITE_URL__/og.png?v=code-switched-tts",
+      "description": "Sinhala-English code-switched text-to-speech with neural speech synthesis, VITS, text normalization, and phoneme processing.",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any (web browser)",
+      "browserRequirements": "Requires JavaScript",
+      "inLanguage": [
+        "en",
+        "si"
+      ],
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "LKR"
+      },
+      "featureList": [
+        "Sinhala-English code-switched speech synthesis",
+        "Text normalization and grapheme-to-phoneme processing",
+        "VITS-based neural text-to-speech",
+        "Speech model selection subject to account access and availability",
+        "Audio playback, speed controls and downloads",
+        "Saved conversation history for signed-in accounts"
+      ],
+      "@id": "__SITE_URL__/#app",
+      "isPartOf": {
+        "@id": "__SITE_URL__/#website"
+      }
+    }
+  ]
+}
     </script>
   </head>
   <body>
     <div id="root"></div>
     <noscript>
-      <h1>VoiceLK: Sinhala voice AI study assistant for O/Level ICT</h1>
-      <p>Ask O/Level ICT questions in English or Sinhala and hear the answers read aloud in natural Sinhala speech. Please enable JavaScript to use VoiceLK.</p>
+      <h1>VoiceLK: Sinhala-English code-switched text-to-speech</h1>
+      <p>Explore neural speech synthesis for mixed Sinhala-English text with VoiceLK. The speech pipeline uses text normalization, grapheme-to-phoneme processing, and VITS. Enable JavaScript to use the voice interface.</p>
     </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -1,3 +1,4 @@
+import { HOME_TITLE } from '../../../../seo/site.js';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   History,
@@ -262,7 +263,7 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
   // Browser tab title, e.g. "VoiceLK | Chat"; a new chat and an open one are both Chat.
   useEffect(() => {
     const page = PAGE_TITLES[activeNav] || 'Chat';
-    document.title = `VoiceLK | ${page}`;
+    document.title = activeNav === 'new_chat' ? HOME_TITLE : `VoiceLK | ${page}`;
   }, [activeNav]);
 
   // Redirect away from profile if logged out

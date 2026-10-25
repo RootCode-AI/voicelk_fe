@@ -1,7 +1,7 @@
 import StudioPageHeader from '../../components/layout/StudioPageHeader';
 import { useState } from 'react';
 import {
-  Search, Rocket, GraduationCap, AudioLines, UserCog,
+  Search, Rocket, Languages, AudioLines, UserCog,
   ChevronDown, ChevronUp, SendHorizonal
 } from 'lucide-react';
 
@@ -59,7 +59,7 @@ function CategoryCard({ icon: Icon, title, description, theme, isActive, onClick
 
 const CATEGORIES = {
   START: 'Getting Started',
-  ICT: 'ICT Lessons Help',
+  SPEECH: 'Code-Switched Speech',
   AUDIO: 'Audio & TTS Tips',
   ACCOUNT: 'Account Management',
 };
@@ -68,7 +68,7 @@ const FAQS = [
   {
     category: CATEGORIES.START,
     question: 'What is VoiceLK and who is it for?',
-    answer: 'VoiceLK is an AI study assistant built for O/Level ICT students in Sri Lanka. Ask a question in the chat, and VoiceLK answers in text and, where useful, as spoken Sinhala audio — great for revising on the go.',
+    answer: 'VoiceLK is a Sinhala-English code-switched text-to-speech platform. Its voice interface combines conversational responses with neural speech synthesis powered by a VITS-based speech pipeline.',
   },
   {
     category: CATEGORIES.START,
@@ -81,12 +81,12 @@ const FAQS = [
     answer: "Click 'New Chat' at the top of the sidebar at any time. Your previous conversation stays safely in History (for signed-in accounts) so you can pick it up again later.",
   },
   {
-    category: CATEGORIES.ICT,
-    question: 'What ICT topics can VoiceLK help with?',
-    answer: 'VoiceLK is tuned for the O/Level ICT syllabus — covering topics like computer fundamentals, number systems, databases, networking, programming logic, and more. Ask in plain English or Sinhala.',
+    category: CATEGORIES.SPEECH,
+    question: 'What does code-switched speech mean?',
+    answer: 'Code-switching means combining Sinhala and English within the same sentence or utterance. VoiceLK uses text normalization and grapheme-to-phoneme processing to prepare mixed-language text for neural speech synthesis.',
   },
   {
-    category: CATEGORIES.ICT,
+    category: CATEGORIES.SPEECH,
     question: 'The answer seems wrong or unclear — what should I do?',
     answer: "Rate the audio response using the star widget beneath it and add a comment. Your feedback is reviewed and helps us improve future answers. (Feedback is available to signed-in accounts only.)",
   },
@@ -156,7 +156,7 @@ export default function HelpView({ isDark }) {
 
   const categories = [
     { icon: Rocket,        iconBg: isDark ? 'rgba(59,130,246,0.15)' : '#eff6ff', iconColor: isDark ? '#60a5fa' : '#3b82f6', title: CATEGORIES.START,   description: 'Basics of using VoiceLK' },
-    { icon: GraduationCap, iconBg: isDark ? 'rgba(16,185,129,0.15)' : '#f0fdf4', iconColor: isDark ? '#34d399' : '#10b981', title: CATEGORIES.ICT,     description: 'Guidance for O/Level syllabus' },
+    { icon: Languages, iconBg: isDark ? 'rgba(16,185,129,0.15)' : '#f0fdf4', iconColor: isDark ? '#34d399' : '#10b981', title: CATEGORIES.SPEECH,     description: 'Sinhala-English text and phonemes' },
     { icon: AudioLines,    iconBg: isDark ? 'rgba(5,150,105,0.18)' : '#ecfdf5', iconColor: isDark ? '#34d399' : '#059669', title: CATEGORIES.AUDIO,   description: 'Troubleshoot speech & playback' },
     { icon: UserCog,       iconBg: isDark ? 'rgba(255,255,255,0.06)' : '#f3f4f6', iconColor: isDark ? '#94a3b8' : '#6b7280', title: CATEGORIES.ACCOUNT, description: 'Profile, theme & privacy' },
   ];

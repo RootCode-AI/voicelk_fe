@@ -1,6 +1,6 @@
 <div align="center">
   <h1>VoiceLK Frontend</h1>
-  <p>AI-powered Sinhala text-to-speech learning platform for O/Level ICT students</p>
+  <p>Sinhala-English code-switched text-to-speech powered by neural speech synthesis</p>
 
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white" />
   <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" />
@@ -12,7 +12,7 @@
 
 ## Overview
 
-VoiceLK allows students to type or paste ICT-related topics and receive AI-generated Sinhala audio responses. The application features:
+VoiceLK provides a conversational interface for Sinhala-English code-switched text-to-speech, with text normalization, grapheme-to-phoneme processing and VITS-based speech synthesis. The application features:
 
 - **Authentication** — Sign in / Sign up with email or Google
 - **Home / Chat** — Submit topics and receive AI responses with Sinhala TTS audio
@@ -127,3 +127,51 @@ git push origin YourName/dev-v1.0
 <div align="center">
   <sub>Built by <strong>RootCode AI</strong> &nbsp;|&nbsp; <a href="https://github.com/RootCode-AI/voicelk_fe">GitHub</a></sub>
 </div>
+
+## SEO and social previews
+
+The public app address defaults to `https://chat.voicelk.dev`. Set
+`VITE_SITE_URL` in the build environment if the production origin changes; it must
+be an HTTP(S) origin without a path, credentials, query or fragment. Rebuild after
+changing it. The app and the product website (`https://voicelk.dev`) have separate
+canonical URLs.
+
+The build includes:
+
+- `/sitemap.xml`: the single public app URL. Chat, History, Profile and Settings
+  are internal views, not separate URLs or public conversations to index.
+- `/robots.txt`: allows crawling and advertises the app sitemap.
+- `/llms.txt`: a public product summary and useful links, sourced from
+  `seo/llms.txt`. This is an AI-reading aid, not a guaranteed ranking signal.
+- `/og.png`: the branded 1731 x 909 PNG for code-switched speech synthesis, sourced from `public/og.png`.
+  Open Graph and Twitter large-image cards reference its absolute URL.
+- Canonical, title, description, and WebSite / WebApplication structured data in
+  the initial HTML. `seo/site.js` keeps the homepage title consistent after React
+  loads, while other app views retain their own tab titles.
+
+SEO text files are also available through the Vite development server. In
+production, run `npm start` after building. The production server serves these
+files with their real content types, redirects `/index.html` to `/`, and returns
+404 for nonexistent URLs instead of indexing duplicate copies of the app.
+
+Run `npm run test:seo` to build and verify metadata, configurable canonical URLs,
+PNG dimensions, technical product positioning, sitemap contents, and real HTTP responses without backend access.
+The optional sitemap `lastmod` is omitted because build time is not necessarily
+the date of a content change.
+
+After deployment, open these URLs and submit the app sitemap to both Google
+Search Console and Bing Webmaster Tools:
+
+- https://chat.voicelk.dev/sitemap.xml
+- https://chat.voicelk.dev/robots.txt
+- https://chat.voicelk.dev/llms.txt
+- https://chat.voicelk.dev/og.png
+
+A verified domain property for `voicelk.dev` in Google Search Console covers its
+subdomains; otherwise add and verify `https://chat.voicelk.dev/` as a URL-prefix
+property. Request indexing of the homepage after deployment. Search engines
+control indexing and ranking; social services may cache image previews.
+
+References: [Google sitemap guidance](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap),
+[Google site names](https://developers.google.com/search/docs/appearance/site-names),
+and the [llms.txt proposal](https://llmstxt.org/).

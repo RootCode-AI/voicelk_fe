@@ -30,7 +30,7 @@ export default function HomeView({ displayName, onSubmit, userData, isDark, onLo
         <h1 id="studio-greeting">Hi there{displayName ? ', ' : ''}<span>{displayName?.split(' ')[0]}</span><br />
           <span className="studio-gradient">What would you like to say?</span>
         </h1>
-        <p className="studio-intro">A little inspiration. A world of possibilities. In your voice.</p>
+        <p className="studio-intro">Sinhala-English code-switched speech, powered by neural text-to-speech.</p>
         <div className="studio-prompts">
           {PROMPTS.map(prompt => (
             <button className="studio-prompt" key={prompt.title} onClick={() => usePrompt(prompt.text)}>
