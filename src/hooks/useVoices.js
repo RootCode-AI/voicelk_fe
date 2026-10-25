@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { getCookie } from '../utils/cookies';
 
@@ -50,16 +50,29 @@ export function voiceLabel(voice) {
 export function useVoices() {
   const [voices, setVoices] = useState(() => voicesCache || []);
   const [loading, setLoading] = useState(!voicesCache);
+  const [error, setError] = useState(null);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt(value => value + 1), []);
 
   useEffect(() => {
-    if (voicesCache) return;
+    if (voicesCache) {
+      setVoices(voicesCache);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     let active = true;
+    setLoading(true);
+    setError(null);
     loadVoices()
       .then(list => { if (active) setVoices(list); })
-      .catch(err => console.warn('[useVoices] Failed to load voices:', err))
+      .catch(err => {
+        console.warn('[useVoices] Failed to load voices:', err);
+        if (active) setError('Models could not be loaded. Please try again.');
+      })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [attempt]);
 
-  return { voices, loading };
+  return { voices, loading, error, retry };
 }

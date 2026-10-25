@@ -1,0 +1,30 @@
+.studio-model-trigger { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; border: 1px solid var(--studio-border); border-radius: 22px; background: var(--studio-surface); padding: 9px 12px; color: var(--studio-muted); font-family: inherit; font-size: 11px; font-weight: 500; }
+.studio-model-trigger:hover:not(:disabled), .studio-model-trigger.is-open { background: var(--studio-hover); color: var(--studio-text); }
+.studio-model-trigger:disabled { cursor: not-allowed; opacity: .6; }
+.studio-model-trigger > svg:last-child { transition: transform .15s; }
+.studio-model-trigger.is-open > svg:last-child { transform: rotate(180deg); }
+.studio-model-popover { --model-bg: #fff; --model-text: #163047; --model-muted: #718096; --model-border: #e4e8ef; --model-hover: #edf5fd; --model-accent: #2388ee; position: fixed; z-index: 120; width: min(340px, calc(100vw - 24px)); max-height: min(420px, calc(100dvh - 24px)); overflow-y: auto; overscroll-behavior: contain; background: var(--model-bg); color: var(--model-text); border: 1px solid var(--model-border); border-radius: 16px; padding: 7px; box-shadow: 0 12px 40px #16304724; font-family: 'Quicksand', system-ui, sans-serif; outline: none; }
+.studio-model-popover.model-dark { --model-bg: #0d1a2c; --model-text: #edf4ff; --model-muted: #9aaabd; --model-border: #253349; --model-hover: #142e49; --model-accent: #68b1fa; color-scheme: dark; }
+.model-menu-heading { display: flex; flex-direction: column; gap: 5px; padding: 10px 12px 14px; border-bottom: 1px solid var(--model-border); margin-bottom: 6px; }
+.model-menu-heading > strong { font-size: 13px; font-weight: 700; }
+.model-menu-heading > span { font-size: 10px; font-weight: 500; color: var(--model-muted); overflow-wrap: anywhere; }
+.model-menu-option { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 12px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--model-text); text-align: left; cursor: pointer; font-family: inherit; }
+.model-menu-option:hover, .model-menu-option.is-selected { background: var(--model-hover); }
+.model-menu-option[aria-disabled="true"] { cursor: not-allowed; color: var(--model-muted); }
+.model-option-icon { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 9px; border: 1px solid var(--model-border); color: var(--model-accent); }
+.model-menu-option[aria-disabled="true"] .model-option-icon { color: var(--model-muted); }
+.model-option-copy { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.model-option-copy > strong { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; overflow-wrap: anywhere; }
+.model-option-copy small { color: var(--model-accent); font-size: 8px; font-weight: 600; padding: 2px 5px; border: 1px solid var(--model-border); border-radius: 5px; }
+.model-option-copy > span { font-size: 10px; font-weight: 400; line-height: 1.6; color: var(--model-muted); }
+.model-option-copy em { font-size: 9px; font-weight: 600; font-style: normal; color: var(--model-muted); }
+.model-selected-check { flex-shrink: 0; color: var(--model-accent); margin-top: 5px; }
+.model-menu-footer { padding: 12px; border-top: 1px solid var(--model-border); margin-top: 6px; }
+.model-menu-footer p, .model-menu-state { font-size: 11px; font-weight: 400; line-height: 1.7; color: var(--model-muted); }
+.model-menu-state { padding: 16px 12px; }
+.model-menu-state > svg { display: inline-block; vertical-align: middle; margin-right: 8px; }
+.model-menu-footer button, .model-menu-state button { display: flex; align-items: center; gap: 7px; margin-top: 10px; border: 0; background: var(--model-hover); color: var(--model-accent); font: 600 11px 'Quicksand', system-ui, sans-serif; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.studio-model-popover button:focus-visible { outline: 2px solid var(--model-accent); outline-offset: -2px; }
+.model-spinner { animation: model-spin .8s linear infinite; }
+@keyframes model-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .studio-model-trigger > svg:last-child { transition: none; } .model-spinner { animation: none; } }

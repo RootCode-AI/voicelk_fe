@@ -79,7 +79,7 @@ function ToastContainer({ toasts, onDismiss }) {
     <div style={{
       position: 'fixed', bottom: 20, right: 20, zIndex: 9999,
       display: 'flex', flexDirection: 'column-reverse', gap: 10,
-      maxWidth: 380, width: '100%', pointerEvents: 'none',
+      maxWidth: 380, width: 'calc(100% - 40px)', pointerEvents: 'none',
     }}>
       {toasts.map(toast => (
         <Toast key={toast.id} toast={toast} onDismiss={onDismiss} />

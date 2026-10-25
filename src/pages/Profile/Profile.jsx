@@ -1,3 +1,4 @@
+import StudioPageHeader from '../../components/layout/StudioPageHeader';
 import { useState, useRef, useEffect } from 'react';
 import { Pencil, User, SlidersHorizontal, ChevronDown, LogOut, Loader2 } from 'lucide-react';
 import { api, friendlyMessage } from '../../services/api';
@@ -42,16 +43,16 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
   };
 
   const theme = {
-    bg: isDark ? '#060f1e' : '#f0f4fa',
-    card: isDark ? 'rgba(12,24,48,0.9)' : '#ffffff',
-    text: isDark ? '#f1f5f9' : '#111827',
-    subText: isDark ? '#94a3b8' : '#6b7280',
-    border: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)',
-    inputBg: isDark ? 'rgba(255,255,255,0.04)' : '#f3f4f6',
-    shadow: isDark ? '0 4px 24px rgba(0,0,0,0.3)' : '0 10px 40px rgba(0,0,0,0.03)',
-    iconColor: isDark ? '#38bdf8' : '#2563eb',
-    avatarBg: isDark ? 'linear-gradient(135deg, #0891b2, #7c3aed)' : 'linear-gradient(135deg, #fbbf24, #f97316)',
-    avatarText: '#ffffff'
+    bg: 'var(--studio-bg)',
+    card: 'var(--studio-surface)',
+    text: 'var(--studio-text)',
+    subText: 'var(--studio-muted)',
+    border: 'var(--studio-border)',
+    inputBg: 'var(--studio-bg)',
+    shadow: 'none',
+    iconColor: 'var(--studio-accent)',
+    avatarBg: 'linear-gradient(135deg, #2388ee, #6556af)',
+    avatarText: '#ffffff',
   };
 
   const avatarInitial = ((user.fullName || user.email)?.[0] || 'U').toUpperCase();
@@ -104,17 +105,10 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
   };
 
   return (
-    <div style={{
-      flex: 1,
-      overflowY: 'auto',
-      padding: '48px 24px',
-      background: theme.bg,
-      color: theme.text,
-      fontFamily: "'Quicksand', system-ui, sans-serif"
-    }}>
-      <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div className="studio-page">
+      <div className="studio-page-content">
+        <StudioPageHeader eyebrow="Your workspace" title="Your profile" description="The details and preferences that make VoiceLK yours." />
+        <div className="studio-profile-summary">
           <div style={{ position: 'relative', marginBottom: 16 }}>
             {user.avatar && !avatarError ? (
               <img
@@ -155,7 +149,7 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
               style={{
                 position: 'absolute', bottom: 0, right: 0,
                 width: 30, height: 30, borderRadius: '50%',
-                background: '#2563eb', border: `3px solid ${theme.bg}`,
+                background: 'var(--studio-accent)', border: `3px solid ${theme.bg}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: uploadingAvatar ? 'not-allowed' : 'pointer', padding: 0,
                 transition: 'transform 0.15s', opacity: uploadingAvatar ? 0.7 : 1
@@ -178,10 +172,7 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
           </p>
         </div>
 
-        <div style={{
-          background: theme.card, borderRadius: 20, padding: 28,
-          boxShadow: theme.shadow, border: `1px solid ${theme.border}`
-        }}>
+        <section className="studio-panel">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
             <User size={20} color={theme.iconColor} strokeWidth={2} />
             <h3 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>Account Information</h3>
@@ -192,11 +183,11 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
               <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: theme.subText, marginBottom: 8 }}>
                 Full Name
               </label>
-              <input
+              <input aria-label="Full name"
                 readOnly
                 value={user.fullName}
                 style={{
-                  width: '100%', padding: '12px 16px', borderRadius: 9999,
+                  width: '100%', padding: '12px 16px', borderRadius: 12,
                   background: theme.inputBg, border: 'none', color: theme.text,
                   fontSize: 14, outline: 'none', fontFamily: 'inherit'
                 }}
@@ -206,11 +197,11 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
               <label style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: theme.subText, marginBottom: 8 }}>
                 Email Address
               </label>
-              <input
+              <input aria-label="Email address"
                 readOnly
                 value={user.email}
                 style={{
-                  width: '100%', padding: '12px 16px', borderRadius: 9999,
+                  width: '100%', padding: '12px 16px', borderRadius: 12,
                   background: theme.inputBg, border: 'none', color: theme.text,
                   fontSize: 14, outline: 'none', fontFamily: 'inherit'
                 }}
@@ -238,18 +229,15 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
             </svg>
             Change Password
           </button>
-        </div>
+        </section>
 
-        <div style={{
-          background: theme.card, borderRadius: 20, padding: 28,
-          boxShadow: theme.shadow, border: `1px solid ${theme.border}`
-        }}>
+        <section className="studio-panel">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
             <SlidersHorizontal size={20} color={theme.iconColor} strokeWidth={2} />
             <h3 style={{ fontSize: 17, fontWeight: 600, margin: 0 }}>Preferences</h3>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+          <div className="studio-setting-row" style={{ marginBottom: 28 }}>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2, color: theme.text }}>Dark Mode</div>
               <div style={{ fontSize: 12.5, color: theme.subText }}>Switch to a darker visual theme</div>
@@ -258,11 +246,11 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
               onClick={() => { if (onToggleDark) onToggleDark(); }}
               style={{
                 width: 48, height: 26, borderRadius: 9999,
-                background: isDark ? '#10b981' : '#e5e7eb',
+                background: isDark ? 'var(--studio-accent)' : 'var(--studio-border)',
                 border: 'none', position: 'relative', cursor: 'pointer',
                 transition: 'background 0.3s ease'
               }}
-              aria-label="Toggle dark mode"
+              aria-label="Toggle dark mode" role="switch" aria-checked={isDark}
             >
               <div style={{
                 width: 20, height: 20, borderRadius: '50%', background: '#ffffff',
@@ -278,11 +266,11 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
               Primary Language
             </label>
             <div style={{ position: 'relative' }}>
-              <select
+              <select aria-label="Primary language"
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
                 style={{
-                  width: '100%', padding: '12px 18px', borderRadius: 9999,
+                  width: '100%', padding: '12px 18px', borderRadius: 12,
                   background: theme.inputBg, border: 'none', color: theme.text,
                   fontSize: 14, outline: 'none', appearance: 'none', cursor: 'pointer',
                   fontWeight: 500, fontFamily: 'inherit'
@@ -294,7 +282,7 @@ export default function ProfileView({ isDark, onToggleDark, onLogout, userData }
               <ChevronDown size={18} color={theme.subText} style={{ position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             </div>
           </div>
-        </div>
+        </section>
 
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
           <button

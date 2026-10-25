@@ -55,7 +55,7 @@ export default function CookieConsentBanner() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 10 }}>
           <button
             onClick={declineCookies}
             style={{

@@ -1,83 +1,59 @@
+import StudioPageHeader from '../../components/layout/StudioPageHeader';
 import { useState } from 'react';
 import {
   Search, Rocket, GraduationCap, AudioLines, UserCog,
   ChevronDown, ChevronUp, SendHorizonal
 } from 'lucide-react';
 
-function FaqItem({ question, answer, theme }) {
+function FaqItem({ question, answer }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div
-      onClick={() => setOpen(prev => !prev)}
-      style={{
-        background: theme.faqItemBg,
-        border: `1px solid ${theme.faqItemBorder}`,
-        borderRadius: 12,
-        padding: '18px 20px',
-        cursor: 'pointer',
-        transition: 'box-shadow 0.18s',
-        userSelect: 'none',
-      }}
-      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)'}
-      onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: theme.faqQuestion }}>
-          {question}
-        </p>
-        {open
-          ? <ChevronUp size={18} color={theme.faqChevron} strokeWidth={2} style={{ flexShrink: 0 }} />
-          : <ChevronDown size={18} color={theme.faqChevron} strokeWidth={2} style={{ flexShrink: 0 }} />
-        }
-      </div>
-
-      {open && (
-        <p style={{
-          margin: '12px 0 0 0', fontSize: 14, fontWeight: 500, color: theme.faqAnswer, lineHeight: 1.65,
-        }}>
-          {answer}
-        </p>
-      )}
+    <div className="studio-faq">
+      <button className="studio-faq-question" onClick={() => setOpen(prev => !prev)} aria-expanded={open}>
+        <span>{question}</span>
+        {open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+      </button>
+      {open && <p className="studio-faq-answer">{answer}</p>}
     </div>
   );
 }
 
-function CategoryCard({ icon: Icon, iconBg, iconColor, title, description, theme, isActive, onClick }) {
+function CategoryCard({ icon: Icon, title, description, theme, isActive, onClick }) {
   return (
-    <div
+    <button type="button" className="studio-help-category" aria-pressed={isActive}
       onClick={onClick}
       style={{
         background: theme.cardBg,
-        border: `1px solid ${isActive ? theme.faqQuestion : theme.cardBorder}`,
+        border: `1px solid ${isActive ? 'var(--studio-accent)' : theme.cardBorder}`,
         borderRadius: 14,
         padding: '24px 16px',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         textAlign: 'center', gap: 12,
         cursor: 'pointer', transition: 'box-shadow 0.18s, transform 0.15s, border-color 0.18s',
-        boxShadow: isActive ? '0 6px 24px rgba(0,0,0,0.2)' : 'none',
+        boxShadow: isActive ? '0 4px 14px rgba(35,136,238,0.07)' : 'none',
         transform: isActive ? 'translateY(-2px)' : 'translateY(0)',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.2)';
+        e.currentTarget.style.boxShadow = '0 4px 14px rgba(35,136,238,0.07)';
         e.currentTarget.style.transform = 'translateY(-2px)';
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.boxShadow = isActive ? '0 6px 24px rgba(0,0,0,0.2)' : 'none';
+        e.currentTarget.style.boxShadow = isActive ? '0 4px 14px rgba(35,136,238,0.07)' : 'none';
         e.currentTarget.style.transform = isActive ? 'translateY(-2px)' : 'translateY(0)';
       }}
     >
       <div style={{
         width: 52, height: 52, borderRadius: '50%',
-        background: iconBg,
+        background: 'var(--studio-hover)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
-        <Icon size={24} color={iconColor} strokeWidth={1.8} />
+        <Icon size={24} color="var(--studio-accent)" strokeWidth={1.8} />
       </div>
       <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: theme.cardTitle }}>{title}</p>
       <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: theme.cardDesc, lineHeight: 1.5 }}>{description}</p>
-    </div>
+    </button>
   );
 }
 
@@ -157,25 +133,25 @@ export default function HelpView({ isDark }) {
   const [activeCategory, setActiveCategory] = useState(null);
 
   const theme = {
-    bg: isDark ? '#060f1e' : '#f0f4fa',
-    heading: isDark ? '#f8fafc' : '#111827',
-    subText: isDark ? '#94a3b8' : '#6b7280',
-    cardBg: isDark ? 'rgba(12,24,48,0.9)' : '#ffffff',
-    cardBorder: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb',
-    cardTitle: isDark ? '#f1f5f9' : '#111827',
-    cardDesc: isDark ? '#94a3b8' : '#6b7280',
-    inputBg: isDark ? 'rgba(255,255,255,0.05)' : '#ffffff',
-    inputBorder: isDark ? 'rgba(255,255,255,0.12)' : '#e5e7eb',
-    inputText: isDark ? '#f8fafc' : '#111827',
-    faqItemBg: isDark ? 'rgba(12,24,48,0.9)' : '#ffffff',
-    faqItemBorder: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb',
-    faqQuestion: isDark ? '#f1f5f9' : '#111827',
-    faqAnswer: isDark ? '#cbd5e1' : '#4b5563',
-    faqChevron: isDark ? '#94a3b8' : '#6b7280',
-    supportCardBg: isDark ? 'rgba(12,24,48,0.6)' : '#f9fafb',
-    supportCardBorder: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb',
-    supportTitle: isDark ? '#f8fafc' : '#111827',
-    supportDesc: isDark ? '#94a3b8' : '#6b7280',
+    bg: 'var(--studio-bg)',
+    heading: 'var(--studio-text)',
+    subText: 'var(--studio-muted)',
+    cardBg: 'var(--studio-surface)',
+    cardBorder: 'var(--studio-border)',
+    cardTitle: 'var(--studio-text)',
+    cardDesc: 'var(--studio-muted)',
+    inputBg: 'var(--studio-surface)',
+    inputBorder: 'var(--studio-border)',
+    inputText: 'var(--studio-text)',
+    faqItemBg: 'var(--studio-surface)',
+    faqItemBorder: 'var(--studio-border)',
+    faqQuestion: 'var(--studio-text)',
+    faqAnswer: 'var(--studio-muted)',
+    faqChevron: 'var(--studio-muted)',
+    supportCardBg: 'var(--studio-surface)',
+    supportCardBorder: 'var(--studio-border)',
+    supportTitle: 'var(--studio-text)',
+    supportDesc: 'var(--studio-muted)',
   };
 
   const categories = [
@@ -193,36 +169,33 @@ export default function HelpView({ isDark }) {
   });
 
   return (
-    <div style={{
+    <div className="studio-page" style={{
       flex: 1, overflowY: 'auto',
       background: theme.bg,
       height: '100%',
       fontFamily: "'Quicksand', system-ui, sans-serif",
     }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', padding: '48px 24px 60px' }}>
+      <div className="studio-page-content">
 
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: 34, fontWeight: 800, color: theme.heading, margin: '0 0 24px 0', letterSpacing: '-0.5px' }}>
-            How can we help you?
-          </h1>
+        <div style={{ marginBottom: 28 }}>
+          <StudioPageHeader eyebrow="A little guidance" title="How can we help?" description="Find your way, learn something new, and make the most of VoiceLK." />
 
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
             background: theme.inputBg,
             border: `1.5px solid ${theme.inputBorder}`,
-            borderRadius: 9999,
-            padding: '10px 20px',
-            boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.2)' : '0 2px 12px rgba(0,0,0,0.05)',
-            maxWidth: 520, margin: '0 auto',
+            borderRadius: 14,
+            padding: '14px 18px',
+            boxShadow: 'none', width: '100%',
           }}>
             <Search size={17} color={theme.subText} strokeWidth={2} style={{ flexShrink: 0 }} />
-            <input
-              type="text"
+            <input aria-label="Search help"
+              type="search"
               value={searchVal}
               onChange={e => setSearchVal(e.target.value)}
               placeholder="Search help articles, tutorials, and FAQs..."
               style={{
-                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none',
                 fontSize: 14, fontWeight: 500, color: theme.inputText, fontFamily: 'inherit',
               }}
             />
@@ -231,7 +204,7 @@ export default function HelpView({ isDark }) {
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(145px, 100%), 1fr))',
           gap: 14,
           marginBottom: 40,
         }}>
@@ -247,7 +220,7 @@ export default function HelpView({ isDark }) {
         </div>
 
         <section style={{ marginBottom: 40 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
             <h2 style={{ fontSize: 22, fontWeight: 700, color: theme.heading, margin: 0, letterSpacing: '-0.3px' }}>
               {activeCategory ? activeCategory : 'Popular FAQs'}
             </h2>
@@ -295,13 +268,13 @@ export default function HelpView({ isDark }) {
             display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10,
             maxWidth: 480, margin: '0 auto', justifyContent: 'center',
           }}>
-            <input
+            <input aria-label="Support message"
               type="text"
               value={messageVal}
               onChange={e => setMessageVal(e.target.value)}
               placeholder="Type your message here..."
               style={{
-                flex: 1, background: theme.inputBg,
+                flex: 1, minWidth: 0, background: theme.inputBg,
                 border: `1.5px solid ${theme.inputBorder}`,
                 borderRadius: 9999,
                 padding: '11px 18px',
@@ -311,7 +284,7 @@ export default function HelpView({ isDark }) {
             />
             <button style={{
               display: 'flex', alignItems: 'center', gap: 7,
-              background: '#1d4ed8', color: '#ffffff',
+              background: 'var(--studio-accent)', color: '#ffffff',
               border: 'none', borderRadius: 9999,
               padding: '11px 20px',
               fontSize: 13.5, fontWeight: 600,
@@ -319,8 +292,8 @@ export default function HelpView({ isDark }) {
               transition: 'background 0.15s',
               whiteSpace: 'nowrap',
             }}
-              onMouseEnter={e => e.currentTarget.style.background = '#1e40af'}
-              onMouseLeave={e => e.currentTarget.style.background = '#1d4ed8'}
+              onMouseEnter={e => e.currentTarget.style.background = '#1277d9'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--studio-accent)'}
             >
               <SendHorizonal size={15} strokeWidth={2.2} />
               Send us a Message

@@ -1,3 +1,4 @@
+import StudioPageHeader from '../../components/layout/StudioPageHeader';
 import React, { useState, useEffect } from 'react';
 import { Moon, Sun, Monitor, Trash2, Download, Shield, Volume2 } from 'lucide-react';
 import { api } from '../../services/api';
@@ -22,13 +23,13 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const isGuest = !userData || userData.role === 'GUEST';
 
   const colors = {
-    bg: isDark ? 'rgba(30, 41, 59, 0.4)' : '#ffffff',
-    border: isDark ? 'rgba(255, 255, 255, 0.08)' : '#e2e8f0',
-    cardBg: isDark ? 'rgba(15, 23, 42, 0.6)' : '#f8fafc',
-    text: isDark ? '#f1f5f9' : '#0f172a',
-    textMuted: isDark ? '#94a3b8' : '#64748b',
-    primary: isDark ? '#38bdf8' : '#0ea5e9',
-    danger: isDark ? '#ef4444' : '#dc2626',
+    bg: 'var(--studio-bg)',
+    border: 'var(--studio-border)',
+    cardBg: 'var(--studio-surface)',
+    text: 'var(--studio-text)',
+    textMuted: 'var(--studio-muted)',
+    primary: 'var(--studio-accent)',
+    danger: 'var(--studio-danger)',
   };
 
   // The list arrives after the first render; pick the saved voice once it is known.
@@ -83,17 +84,11 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   };
 
   const SettingSection = ({ title, icon: Icon, children }) => (
-    <div style={{
-      background: colors.cardBg,
-      border: `1px solid ${colors.border}`,
-      borderRadius: 16,
-      padding: '24px',
-      marginBottom: '24px',
-    }}>
+    <section className="studio-panel">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
         <div style={{
           width: 36, height: 36, borderRadius: 10,
-          background: isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.1)',
+          background: 'var(--studio-hover)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: colors.primary
         }}>
@@ -104,33 +99,23 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {children}
       </div>
-    </div>
+    </section>
   );
 
   const SettingRow = ({ label, description, control }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20 }}>
+    <div className="studio-setting-row">
       <div>
         <div style={{ fontSize: 15, fontWeight: 500, color: colors.text, marginBottom: 4 }}>{label}</div>
         <div style={{ fontSize: 13, color: colors.textMuted }}>{description}</div>
       </div>
-      <div>{control}</div>
+      <div className="studio-setting-control">{control}</div>
     </div>
   );
 
   return (
-    <div style={{
-      flex: 1,
-      height: '100%',
-      overflowY: 'auto',
-    }}>
-    <div style={{
-      padding: '32px 40px',
-      maxWidth: 800,
-      margin: '0 auto',
-      width: '100%',
-    }}>
-      <h2 style={{ fontSize: 28, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Settings</h2>
-      <p style={{ color: colors.textMuted, marginBottom: 32 }}>Manage your application preferences and account settings.</p>
+    <div className="studio-page">
+    <div className="studio-page-content">
+      <StudioPageHeader eyebrow="Make it yours" title="Settings" description="A workspace that sounds and feels like you." />
 
       {/* General / Appearance */}
       <SettingSection title="Appearance" icon={Monitor}>
@@ -138,14 +123,15 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
           label="Application Theme"
           description="Choose how VoiceLK looks to you."
           control={
-            <div style={{ display: 'flex', gap: 8, background: isDark ? 'rgba(0,0,0,0.2)' : '#e2e8f0', padding: 4, borderRadius: 999 }}>
+            <div style={{ display: 'flex', gap: 8, background: 'var(--studio-bg)', padding: 4, borderRadius: 999 }}>
               <button
-                onClick={() => onToggleDark()}
+                aria-pressed={!isDark}
+                onClick={() => { if (isDark) onToggleDark(); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '6px 14px', borderRadius: 999, border: 'none', cursor: 'pointer',
                   background: !isDark ? '#fff' : 'transparent',
-                  color: !isDark ? '#0ea5e9' : colors.textMuted,
+                  color: !isDark ? 'var(--studio-accent)' : colors.textMuted,
                   fontWeight: 500, transition: 'all 0.2s',
                   boxShadow: !isDark ? '0 2px 4px rgba(0,0,0,0.05)' : 'none'
                 }}
@@ -153,12 +139,13 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
                 <Sun size={16} /> Light
               </button>
               <button
-                onClick={() => onToggleDark()}
+                aria-pressed={isDark}
+                onClick={() => { if (!isDark) onToggleDark(); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '6px 14px', borderRadius: 999, border: 'none', cursor: 'pointer',
                   background: isDark ? 'rgba(255,255,255,0.1)' : 'transparent',
-                  color: isDark ? '#38bdf8' : colors.textMuted,
+                  color: isDark ? 'var(--studio-accent)' : colors.textMuted,
                   fontWeight: 500, transition: 'all 0.2s',
                   boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : 'none'
                 }}
@@ -178,13 +165,13 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
           description={voices.find(v => v.key === voiceModel)?.description
             || 'The voice used to read answers aloud.'}
           control={
-            <select
+            <select aria-label="Voice"
               value={voiceModel}
               onChange={(e) => handleVoiceChange(e.target.value)}
               disabled={voicesLoading || !voices.length}
               style={{
                 padding: '8px 12px', borderRadius: 8, border: `1px solid ${colors.border}`,
-                background: isDark ? 'rgba(0,0,0,0.2)' : '#fff', color: colors.text,
+                background: 'var(--studio-bg)', color: colors.text,
                 outline: 'none', cursor: voices.length ? 'pointer' : 'not-allowed', minWidth: 140
               }}
             >
@@ -202,12 +189,12 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
           label="Playback Speed"
           description="Default speed for AI voice responses."
           control={
-            <select
+            <select aria-label="Playback speed"
               value={playbackSpeed}
               onChange={(e) => handleSpeedChange(e.target.value)}
               style={{
                 padding: '8px 12px', borderRadius: 8, border: `1px solid ${colors.border}`,
-                background: isDark ? 'rgba(0,0,0,0.2)' : '#fff', color: colors.text,
+                background: 'var(--studio-bg)', color: colors.text,
                 outline: 'none', cursor: 'pointer', minWidth: 100
               }}
             >
@@ -224,6 +211,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
           description="Automatically play audio responses when generated."
           control={
             <button
+              role="switch" aria-label="Auto-play audio" aria-checked={autoPlay}
               onClick={handleAutoPlayToggle}
               style={{
                 width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
