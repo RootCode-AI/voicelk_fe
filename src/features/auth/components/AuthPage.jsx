@@ -213,7 +213,7 @@ export default function AuthPage({ onLogin, onClose, isDark = false }) {
           <div className="auth-story-content">
             <span className="auth-eyebrow"><Sparkles size={14} /> A little curiosity goes a long way</span>
             <h2>Big ideas.<br /><span>A familiar voice.</span></h2>
-            <p>Make sense of ICT, one conversation at a time. Ask, listen, and learn in Sinhala.</p>
+            <p>Bring mixed Sinhala-English text to life with code-switched speech synthesis.</p>
             <div className="auth-audio-art" aria-hidden="true">
               <div className="auth-art-top"><span className="auth-art-icon"><AudioLines size={21} /></span><span>Learning that speaks to you<small>Your ideas, brought to life</small></span><span className="auth-art-dot" /></div>
               <div className="auth-wave">{[18, 28, 42, 24, 52, 66, 36, 78, 54, 92, 72, 44, 60, 84, 100, 66, 38, 74, 50, 30, 64, 42, 22, 36, 18].map((height, index) => <i key={index} style={{ height: `${height}%` }} />)}</div>

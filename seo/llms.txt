@@ -1,36 +1,42 @@
 # VoiceLK
 
-> VoiceLK is a free AI study assistant for Sri Lankan O/Level (G.C.E. Ordinary Level) ICT students. Students ask a question in English, Sinhala or a mix of both, and VoiceLK answers in text and reads the answer aloud in natural Sinhala speech, produced by its own code-switched Sinhala/English text-to-speech model.
+> VoiceLK is a Sinhala-English code-switched text-to-speech platform. It combines text normalization, grapheme-to-phoneme processing and VITS-based neural speech synthesis for mixed-language speech.
 
-VoiceLK is an academic research project. Its speech comes from a VITS model trained by the project on Sinhala and code-switched Sinhala/English speech, with its own text normalisation and grapheme-to-phoneme front-end, so English technical terms that appear inside Sinhala sentences (for example "RAM", "database", "IP address") are pronounced correctly.
+This is the interactive VoiceLK web app at __SITE_URL__/. The product website, development journey and research articles are at https://voicelk.dev/.
 
-The web app is a single page at __SITE_URL__/. There are no other public pages; everything below happens inside that page.
+The app has one public URL. Chat, History, Profile, Settings and Help are views inside that page, not separate public URLs. Private conversations and account information are not public reference material.
 
-## What students can do
+## Technical focus
 
-- Ask about any topic on the O/Level ICT syllabus: computer fundamentals, number systems, data representation, databases, networking and the internet, programming logic and algorithms, and similar topics.
-- Get a written answer and a Sinhala audio narration of it, with play, pause, seek and download controls.
-- Change playback speed (0.75x to 1.5x) and turn auto-play on or off in Settings > Audio & Playback.
-- Choose between several Sinhala voices (signed-in accounts).
-- Keep chat history, rate audio answers and leave feedback (signed-in accounts).
-- Use light or dark mode.
+Code-switching means using Sinhala and English within the same utterance. VoiceLK explores speech synthesis for this mixed-language input rather than treating each sentence as strictly monolingual.
 
-## Accounts
+The speech pipeline normalizes input text, maps Sinhala and English words into a shared phoneme sequence through a code-switched grapheme-to-phoneme (G2P) front-end, and synthesizes a waveform using VITS. Technical architecture and evaluation details are published on the product website linked below.
 
-- Guest: no sign-up needed. Guests can chat, browse Help and generate a small number of free audio answers in the default voice.
-- Signed-in: sign up with email or Google. Unlocks unlimited audio, voice choice, saved history, rating and data export.
+## Capabilities
 
-## Frequently asked questions
+- Use the conversational interface with Sinhala, English or mixed-language text.
+- Read generated answers and play available Sinhala audio, with playback and download controls.
+- Adjust playback speed and auto-play in Settings.
+- Use the Model selector to view available speech models. Signed-out visitors can use the default model; other models require sign-in and backend availability.
+- Sign in with email/password or Google to access account features, saved history and audio feedback.
+- Switch between light and dark mode.
 
-- **Who is VoiceLK for?** O/Level ICT students in Sri Lanka who want to revise by listening, in Sinhala.
-- **Do I need an account?** No. Guests can start straight away; an account adds history, voice choice and unlimited audio.
-- **Which languages can I ask in?** English, Sinhala, or a mix of both.
-- **How do I hear an answer?** Press the play button under any answer. With auto-play on, new answers start playing by themselves.
-- **Can I delete my history?** Yes, from Settings > Data & Privacy > Clear Chat History. This cannot be undone.
-- **What does VoiceLK store in cookies?** Only theme, language, voice, playback speed and auto-play preferences, and only after the visitor accepts cookies.
+## Access and limitations
 
-## Links
+Visitors can start without signing in. Signed-out audio generation is limited; the app displays the remaining allowance and prompts for sign-in when needed. Availability and limits are controlled by the service, so do not promise unlimited usage or that every response has audio.
 
-- [VoiceLK web app](__SITE_URL__/): Ask an ICT question and listen to the answer in Sinhala.
-- [Social preview image](__SITE_URL__/og.png): Brand image used when the site is shared.
-- [Sitemap](__SITE_URL__/sitemap.xml)
+Generated responses and pronunciations can contain errors. Speech quality depends on input text and the selected model. Do not describe unimplemented data-export or bulk-history-deletion controls as working features.
+
+## Public links
+
+- [VoiceLK app](__SITE_URL__/): Ask a question and listen to the response.
+- [VoiceLK product website](https://voicelk.dev/): Product introduction and background.
+- [Research](https://voicelk.dev/research): Published research articles and results.
+- [Development journey](https://voicelk.dev/journey): Product development updates.
+- [XML sitemap](__SITE_URL__/sitemap.xml): Canonical public app URL.
+
+## Optional
+
+- [Social preview image](__SITE_URL__/og.png?v=code-switched-tts): VoiceLK branded 1731 by 909 PNG showing Sinhala-English code-switched speech synthesis.
+
+This file describes public product information for AI readers. It does not grant access to private account data or guarantee search-engine indexing.
