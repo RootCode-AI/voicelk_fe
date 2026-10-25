@@ -1,3 +1,4 @@
+import StudioPageHeader from '../../components/layout/StudioPageHeader';
 import { useState, useEffect } from 'react';
 import { Bot, Clock, Loader2, Trash2 } from 'lucide-react';
 import { api, friendlyMessage } from '../../services/api';
@@ -93,46 +94,44 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
   };
 
   const theme = {
-    bg: isDark ? '#060f1e' : '#f0f4fa',
-    heading: isDark ? '#f1f5f9' : '#111827',
-    emptyText: isDark ? '#64748b' : '#9ca3af',
-    dateLabel: isDark ? '#94a3b8' : '#6b7280',
-    itemText: isDark ? '#f1f5f9' : '#1f2937',
-    metaText: isDark ? '#94a3b8' : '#6b7280',
-    playBg: isDark ? '#1e293b' : '#e5e7eb',
-    playBgHover: isDark ? '#334155' : '#d1d5db',
-    playIcon: isDark ? '#94a3b8' : '#4b5563',
-    badgeBg: isDark ? 'rgba(255,255,255,0.08)' : '#f3f4f6',
-    badgeText: isDark ? '#cbd5e1' : '#4b5563',
-    divider: isDark ? 'rgba(255,255,255,0.07)' : '#f3f4f6',
-    dot: isDark ? '#475569' : '#d1d5db',
-    btnBg: isDark ? '#0f172a' : '#ffffff',
-    btnBgHover: isDark ? '#1e293b' : '#f9fafb',
-    btnBorder: isDark ? 'rgba(255,255,255,0.15)' : '#e5e7eb',
-    btnText: isDark ? '#38bdf8' : '#2563eb',
-    responseBg: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
-    responseBorder: isDark ? 'rgba(255,255,255,0.06)' : '#e5e7eb',
-    responseText: isDark ? '#94a3b8' : '#6b7280',
-    itemBg: isDark ? 'rgba(12,24,48,0.9)' : '#ffffff',
-    itemHoverBg: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+    bg: 'var(--studio-bg)',
+    heading: 'var(--studio-text)',
+    emptyText: 'var(--studio-muted)',
+    dateLabel: 'var(--studio-muted)',
+    itemText: 'var(--studio-text)',
+    metaText: 'var(--studio-muted)',
+    playBg: 'var(--studio-hover)',
+    playBgHover: 'var(--studio-hover)',
+    playIcon: 'var(--studio-accent)',
+    badgeBg: 'var(--studio-hover)',
+    badgeText: 'var(--studio-accent)',
+    divider: 'var(--studio-border)',
+    dot: 'var(--studio-muted)',
+    btnBg: 'var(--studio-surface)',
+    btnBgHover: 'var(--studio-hover)',
+    btnBorder: 'var(--studio-border)',
+    btnText: 'var(--studio-accent)',
+    responseBg: 'var(--studio-bg)',
+    responseBorder: 'var(--studio-border)',
+    responseText: 'var(--studio-muted)',
+    itemBg: 'var(--studio-surface)',
+    itemHoverBg: 'var(--studio-hover)',
   };
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', background: theme.bg, height: '100%', fontFamily: "'Quicksand', system-ui, sans-serif" }}>
+    <div className="studio-page" style={{ flex: 1, overflowY: 'auto', background: theme.bg, height: '100%', fontFamily: "'Quicksand', system-ui, sans-serif" }}>
       <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
         }
       `}</style>
-      <div style={{ maxWidth: 780, width: '100%', margin: '0 auto', padding: '36px 24px 48px 24px', display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+      <div className="studio-page-content">
 
-        <h1 style={{ fontSize: 36, fontWeight: 800, color: theme.heading, margin: '0 0 24px 0', letterSpacing: '-0.5px' }}>
-          History
-        </h1>
+        <StudioPageHeader eyebrow="Your workspace" title="Your conversations" description="Pick up where you left off. All your ideas, in one place." />
 
         {!userData?.userId ? (
-          <div style={{
+          <div className="studio-empty-state" style={{
             flex: 1,
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
@@ -142,7 +141,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
             <p style={{ fontSize: 15, fontWeight: 500, margin: 0 }}>Please log in to see your history</p>
           </div>
         ) : loading ? (
-          <div style={{
+          <div className="studio-empty-state" style={{
             flex: 1,
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
@@ -152,7 +151,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
             <p style={{ fontSize: 14, fontWeight: 500, margin: 0 }}>Loading history...</p>
           </div>
         ) : historyGroups.length === 0 ? (
-          <div style={{
+          <div className="studio-empty-state" style={{
             flex: 1,
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
@@ -172,17 +171,24 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   {group.items.map((item, ii) => (
                     <div key={item.id ?? ii}>
-                      <div
+                      <div className="studio-history-card" role="button" tabIndex={item.pending ? -1 : 0}
+                        aria-label={`Open conversation: ${item.content}`}
+                        onKeyDown={event => {
+                          if (event.target === event.currentTarget && !item.pending && (event.key === 'Enter' || event.key === ' ')) {
+                            event.preventDefault();
+                            onSelectHistoryItem?.(item);
+                          }
+                        }}
                         onClick={() => !item.pending && onSelectHistoryItem && onSelectHistoryItem(item)}
                         style={{
                           display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 16,
-                          padding: '18px 12px', margin: '0 -12px',
+                          background: theme.itemBg, border: `1px solid ${theme.btnBorder}`,
                           cursor: item.pending ? 'default' : 'pointer', borderRadius: 12,
                           transition: 'background 0.2s',
                           opacity: item.pending ? 0.75 : 1,
                         }}
                         onMouseEnter={e => { if (!item.pending) e.currentTarget.style.background = theme.itemHoverBg; }}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        onMouseLeave={e => e.currentTarget.style.background = theme.itemBg}
                       >
                         <div 
                           style={{
@@ -195,7 +201,7 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
                           <Bot size={18} strokeWidth={1.8} color={theme.playIcon} />
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
                           <p style={{ fontSize: 15, color: theme.itemText, fontWeight: 500, lineHeight: 1.6, margin: 0 }}>
                             {item.content}
                           </p>
@@ -257,9 +263,6 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
 
                       </div>
 
-                      {ii < group.items.length - 1 && (
-                        <div style={{ height: 1, background: theme.divider, width: '100%', margin: '4px 0' }} />
-                      )}
                     </div>
                   ))}
                 </div>

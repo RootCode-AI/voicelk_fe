@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Pause, Download, PlusCircle, Send, Bot, Loader2, Volume2, Star, MessageSquare } from 'lucide-react';
+import { Play, Pause, Download, Sparkles, Languages, Send, Bot, Loader2, Volume2, Star, MessageSquare } from 'lucide-react';
 import { api, friendlyMessage, ApiError } from '../../services/api';
 import { useError } from '../../context/ErrorContext';
 import { getCookie } from '../../utils/cookies';
 import { getPlaybackSpeed } from '../../utils/playback';
-import { useVoices, loadVoices, preferredVoice, voiceLabel } from '../../hooks/useVoices';
+import { loadVoices, preferredVoice } from '../../hooks/useVoices';
+import { useModelSelection } from '../../hooks/useModelSelection';
+import { selectedModelKey } from '../../utils/modelSelection';
+import ModelSelector from '../../components/common/ModelSelector/ModelSelector';
 import { getToken, expireSession } from '../../services/session';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -80,7 +83,8 @@ function FeedbackWidget({ audioId, userId, userRole, isDark }) {
     <div style={{
       marginTop: 10,
       display: 'inline-block',
-      width: isEditing ? 280 : 'auto',
+      width: isEditing ? 'min(280px, 100%)' : 'auto',
+      maxWidth: '100%', minWidth: 0,
       background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
       borderRadius: 12,
       padding: '8px 10px',
@@ -309,15 +313,15 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId, autoPlay = false 
 
   // Theme colors
   const colors = {
-    bg: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
-    border: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb',
-    playBtnBg: isDark ? '#0ea5e9' : '#3b82f6',
-    playBtnHover: isDark ? '#38bdf8' : '#2563eb',
-    trackBg: isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb',
-    trackFill: isDark ? '#0ea5e9' : '#3b82f6',
-    timeText: isDark ? '#94a3b8' : '#6b7280',
-    iconColor: isDark ? '#94a3b8' : '#6b7280',
-    iconHover: isDark ? '#e2e8f0' : '#374151',
+    bg: 'var(--studio-bg)',
+    border: 'var(--studio-border)',
+    playBtnBg: '#2388ee',
+    playBtnHover: '#1277d9',
+    trackBg: 'var(--studio-border)',
+    trackFill: 'var(--studio-accent)',
+    timeText: 'var(--studio-muted)',
+    iconColor: 'var(--studio-muted)',
+    iconHover: 'var(--studio-accent)',
   };
 
   return (
@@ -338,7 +342,7 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId, autoPlay = false 
         onClick={togglePlay}
         disabled={isLoading}
         style={{
-          width: 36, height: 36, borderRadius: '50%',
+          width: 36, height: 36, flexShrink: 0, borderRadius: '50%',
           background: colors.playBtnBg,
           border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -446,22 +450,15 @@ function ThinkingBubble({ isDark }) {
   );
 }
 
-export default function ChatView({ t, isDark, initialMessage = '', initialHistoryItem = null, userData, onHistoryPending, onHistoryResolved }) {
+export default function ChatView({ isDark, initialMessage = '', initialModel = '', onLoginClick, initialHistoryItem = null, userData, onHistoryPending, onHistoryResolved }) {
   const [messages, setMessages] = useState([]);
   const [inputVal, setInputVal] = useState('');
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef(null);
   const initialSentRef = useRef(false);
   const { showError } = useError();
-  // Guests' free clips always use the default voice, so they have no voice to choose.
-  const isGuest = !userData || userData.role === 'GUEST';
-  const { voices } = useVoices();
-  // Starts from the voice saved in Settings; changing it here affects this chat only.
-  const [voiceModel, setVoiceModel] = useState('');
-
-  useEffect(() => {
-    if (voices.length) setVoiceModel(current => current || preferredVoice(voices));
-  }, [voices]);
+  const selection = useModelSelection(userData, initialModel);
+  const { isGuest, requestedModel } = selection;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -554,7 +551,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
         'warning', { title: 'Free audio limit reached' });
     } else if (data.audioId) {
       showError(remaining > 0
-        ? `You can generate ${clips(remaining)} as a guest. Sign in for unlimited audio.`
+        ? `You can generate ${clips(remaining)}. Sign in for unlimited audio.`
         : 'That was your last free audio. Sign in to keep generating audio.',
         'info', { title: 'Free audio' });
     }
@@ -578,9 +575,8 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
     try {
       // A question sent straight from Home can arrive before the voice list has
       // loaded, so the list is awaited here rather than read from state.
-      const voice = isGuest
-        ? ''
-        : voiceModel || preferredVoice(await loadVoices().catch(() => []));
+      const availableModels = isGuest ? [] : await loadVoices().catch(() => []);
+      const voice = isGuest ? '' : selectedModelKey(availableModels, requestedModel, false, preferredVoice(availableModels));
       const payload = {
         inputText: text,
         syllabusTopic: '',
@@ -664,7 +660,8 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
       initialSentRef.current = true;
       const userMsg = { id: Date.now(), type: 'user', content: initialMessage };
       setMessages([userMsg]);
-      sendToBackend(initialMessage);
+      setIsSending(true);
+      sendToBackend(initialMessage).finally(() => setIsSending(false));
     }
   }, [initialMessage, initialHistoryItem]);
 
@@ -683,7 +680,7 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+    <div className="studio-chat">
       <style>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
@@ -694,8 +691,9 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
         }
       `}</style>
       
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 90px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="studio-chat-scroll">
+        <div className="studio-chat-messages">
+          <div className="studio-chat-heading"><Sparkles size={16} /><span>Your conversation</span></div>
           {messages.map(msg => (
             <div key={msg.id} style={{
               display: 'flex', 
@@ -705,8 +703,8 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
               {msg.type === 'ai' && (
                 <div style={{
                   width: 32, height: 32, borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
-                  boxShadow: '0 3px 10px rgba(59,130,246,0.35)',
+                  background: '#2388ee',
+                  boxShadow: 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0, marginRight: 12, marginTop: 4
                 }}>
@@ -714,23 +712,23 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
                 </div>
               )}
 
-              <div style={{
-                maxWidth: msg.type === 'user' ? '90%' : 640,
+              <div className="studio-chat-bubble" style={{
+                maxWidth: msg.type === 'user' ? '90%' : 'min(640px, calc(100% - 44px))',
                 background: msg.type === 'user'
-                  ? (isDark ? '#1e293b' : '#f3f4f6')
-                  : (isDark ? 'rgba(255,255,255,0.04)' : '#ffffff'),
+                  ? 'var(--studio-hover)'
+                  : 'var(--studio-surface)',
                 color: msg.isError
                   ? (isDark ? '#fca5a5' : '#dc2626')
                   : msg.type === 'user'
-                    ? (isDark ? '#f8fafc' : '#111827')
-                    : (isDark ? '#f1f5f9' : '#1f2937'),
+                    ? 'var(--studio-text)'
+                    : 'var(--studio-text)',
                 padding: msg.type === 'user' ? '10px 16px' : '14px 18px',
                 borderRadius: msg.type === 'user' ? 20 : '4px 16px 16px 16px',
                 border: msg.type === 'ai'
-                  ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}`
+                  ? '1px solid var(--studio-border)'
                   : 'none',
                 boxShadow: msg.type === 'ai'
-                  ? (isDark ? '0 2px 12px rgba(0,0,0,0.25)' : '0 2px 12px rgba(15,23,42,0.05)')
+                  ? 'none'
                   : 'none',
                 fontSize: 14.5,
                 lineHeight: 1.7,
@@ -789,94 +787,30 @@ export default function ChatView({ t, isDark, initialMessage = '', initialHistor
         </div>
       </div>
 
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '12px 16px',
-        background: `linear-gradient(to bottom, transparent, ${t.pageBg} 20%)`,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8
-      }}>
-        <form
-          onSubmit={handleSend}
-          style={{
-            width: '100%', maxWidth: 760,
-            display: 'flex', alignItems: 'center', gap: 12,
-            background: isDark ? '#1e293b' : '#ffffff',
-            border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`,
-            borderRadius: 9999,
-            padding: '10px 12px 10px 16px',
-            boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.2)' : '0 4px 20px rgba(0,0,0,0.05)'
-          }}
-        >
-          <button
-            type="button"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: '#9ca3af', padding: 0, display: 'flex', alignItems: 'center'
-            }}
-          >
-            <PlusCircle size={22} strokeWidth={2} />
-          </button>
-
-          <input
-            type="text"
-            value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
-            placeholder="Type a topic or paste text to generate Sinhala audio..."
-            disabled={isSending}
-            style={{
-              flex: 1, background: 'transparent', border: 'none', outline: 'none',
-              fontSize: 15, color: isDark ? '#f8fafc' : '#111827', fontFamily: 'inherit',
-              opacity: isSending ? 0.6 : 1,
-            }}
-          />
-
-          {!isGuest && voices.length > 0 && (
-            <select
-              value={voiceModel}
-              onChange={(e) => setVoiceModel(e.target.value)}
+      <div className="studio-chat-compose">
+        <form className="studio-composer" onSubmit={handleSend}>
+          <div className="studio-input-row">
+            <Sparkles size={16} aria-hidden="true" />
+            <textarea aria-label="Message to VoiceLK" rows={2}
+              value={inputVal} onChange={event => setInputVal(event.target.value)}
+              placeholder="Ask a follow-up or paste your text. Keep the conversation going..."
               disabled={isSending}
-              title={voices.find(v => v.key === voiceModel)?.description || 'Voice for the audio answer'}
-              aria-label="Voice"
-              style={{
-                flexShrink: 0, maxWidth: 180,
-                padding: '4px 8px', borderRadius: 9999,
-                border: `1px solid ${isDark ? '#334155' : '#e5e7eb'}`,
-                background: isDark ? '#0f172a' : '#f9fafb',
-                color: isDark ? '#cbd5e1' : '#374151',
-                fontSize: 13, fontFamily: 'inherit', outline: 'none',
-                cursor: isSending ? 'default' : 'pointer',
-              }}
-            >
-              {voices.map(v => (
-                <option key={v.key} value={v.key}>{voiceLabel(v)}</option>
-              ))}
-            </select>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSending || !inputVal.trim()}
-            style={{
-              background: 'none', border: 'none',
-              cursor: (inputVal.trim() && !isSending) ? 'pointer' : 'default',
-              color: (inputVal.trim() && !isSending) ? '#3b82f6' : '#9ca3af', padding: 0,
-              display: 'flex', alignItems: 'center',
-              transition: 'color 0.2s, transform 0.1s',
-              transform: (inputVal.trim() && !isSending) ? 'scale(1.05)' : 'scale(1)'
-            }}
-          >
-            <Send size={20} strokeWidth={2.5} />
-          </button>
+              onKeyDown={event => {
+                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) handleSend(event);
+              }} />
+          </div>
+          <div className="studio-composer-toolbar">
+            <span className="studio-language"><Languages size={17} /><span>Sinhala audio</span></span>
+            <div className="studio-composer-actions">
+              <ModelSelector selection={selection} isDark={isDark} disabled={isSending} onSignIn={onLoginClick} />
+              <button type="submit" className="studio-send" disabled={isSending || !inputVal.trim()} aria-label={isSending ? 'Sending message' : 'Send message'}>
+                {isSending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}<span>{isSending ? 'Sending' : 'Send'}</span>
+              </button>
+            </div>
+          </div>
         </form>
-
-        <p style={{
-          margin: 0, fontSize: 12, textAlign: 'center',
-          color: isDark ? '#64748b' : '#9ca3af'
-        }}>
-          VoiceLK can make mistakes. Double check it.
-        </p>
+        <p className="studio-composer-note">VoiceLK can make mistakes. Double check it.</p>
       </div>
-
     </div>
   );
 }

@@ -1,16 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   History,
   UserCircle2,
   Settings,
   HelpCircle,
+  Sun,
+  Moon,
   PanelLeftClose,
   PanelLeftOpen,
-  Plus,
-  Bell,
+  Menu,
+  Sparkles,
+  MessageSquare,
+  AudioLines,
+  X,
   LogIn,
   LogOut,
 } from 'lucide-react';
+import Tooltip from '../../common/Tooltip/Tooltip';
+import './MainLayout.css';
+import './StudioPages.css';
 import voiceLKMark from '../../../assets/images/voicelk-mark.png';
 import voiceLKMarkWhite from '../../../assets/images/voicelk-mark-white.png';
 import voiceLKLogo from '../../../assets/images/voicelk-logo.png';
@@ -25,8 +33,8 @@ import HelpView from '../../../pages/Help/Help';
 import SettingsView from '../../../pages/Settings/Settings';
 
 const LIGHT = {
-  pageBg: '#f0f4fa',
-  sidebarBg: '#f8fafc',
+  pageBg: '#f8f9fb',
+  sidebarBg: '#ffffff',
   sidebarBorder: '#e5e7eb',
   logoMark: voiceLKMark,
   logoFull: voiceLKLogo,
@@ -122,344 +130,49 @@ const PAGE_TITLES = {
   help: 'Help',
 };
 
-function IconBtn({ onClick, title, children, t, style = {} }) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        color: t.topbarIcon, padding: 7, borderRadius: 8,
-        lineHeight: 0, transition: 'color 0.15s, background 0.15s',
-        ...style,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.color = t.topbarIconHover;
-        e.currentTarget.style.background = t.topbarIconHoverBg;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.color = t.topbarIcon;
-        e.currentTarget.style.background = 'transparent';
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-// When a click swaps the DOM under a stationary cursor (e.g. closing the
-// sidebar mounts a different button right where the pointer already sits),
-// browsers re-fire mouseenter on the new element with no real mouse motion.
-// This flag makes tooltips ignore that "phantom" hover until the pointer
-// actually moves, so a tooltip only reappears once the user re-hovers it.
-let vlkSuppressTooltipHover = false;
-function vlkArmTooltipSuppression() {
-  vlkSuppressTooltipHover = true;
-  const clear = () => {
-    vlkSuppressTooltipHover = false;
-    window.removeEventListener('mousemove', clear);
-  };
-  window.addEventListener('mousemove', clear);
-}
-
-function Tooltip({ label, children, pos = 'right' }) {
-  const [show, setShow] = useState(false);
-  return (
-    <span
-      className="vlk-tt-wrap"
-      onMouseEnter={() => { if (!vlkSuppressTooltipHover) setShow(true); }}
-      onMouseLeave={() => setShow(false)}
-      onClickCapture={() => { setShow(false); vlkArmTooltipSuppression(); }}
-    >
-      {children}
-      <span className={`vlk-tt-bubble${show ? ' vlk-tt-show' : ''}`} data-pos={pos}>{label}</span>
-    </span>
-  );
-}
-
-function AvatarCircle({ src, label, size, gradient, textColor, fontSize }) {
-  const [errored, setErrored] = useState(false);
-
-  if (src && !errored) {
-    return (
-      <img
-        src={src}
-        alt="User avatar"
-        referrerPolicy="no-referrer"
-        onError={() => setErrored(true)}
-        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-      />
-    );
-  }
-
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: gradient,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize, fontWeight: 700, color: textColor,
-    }}>
-      {label}
-    </div>
-  );
-}
-
-function NavItem({ id, label, Icon, isActive, full, t, onClick }) {
-  const isDark = t.pageBg === '#060f1e';
-  const activeBg = isDark ? 'rgba(16, 185, 129, 0.15)' : '#ccfbf1';
-  const activeText = isDark ? '#34d399' : '#0f766e';
-  const activeIcon = activeText;
-
-  if (!full) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-        <Tooltip label={label}>
-          <button
-            onClick={onClick}
-            style={{
-              width: 36, height: 36,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              borderRadius: '50%',
-              border: 'none',
-              background: isActive ? activeBg : 'transparent',
-              cursor: 'pointer',
-              transition: 'background 0.16s',
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = t.navBgHover; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? activeBg : 'transparent'; }}
-          >
-            <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8}
-              style={{ color: isActive ? activeIcon : t.navIconColor }} />
-          </button>
-        </Tooltip>
-      </div>
-    );
-  }
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: '100%',
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '7px 14px',
-        borderRadius: 9999,
-        border: 'none',
-        background: isActive ? activeBg : 'transparent',
-        cursor: 'pointer',
-        color: isActive ? activeText : t.navText,
-        fontFamily: 'inherit', fontSize: 13.5,
-        fontWeight: isActive ? 600 : 400,
-        transition: 'background 0.16s, color 0.16s',
-        whiteSpace: 'nowrap', overflow: 'hidden', textAlign: 'left',
-      }}
-      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = t.navBgHover; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? activeBg : 'transparent'; }}
-    >
-      <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8}
-        style={{ color: isActive ? activeIcon : t.navIconColor, flexShrink: 0 }} />
-      <span>{label}</span>
-    </button>
-  );
-}
-
-function CollapsedSidebar({ t, activeNav, setActiveNav, onLogoClick, onNewChat, isAuthenticated }) {
-  const [logoHover, setLogoHover] = useState(false);
-
-  return (
-    <div style={{
-      width: 52, minWidth: 52,
-      height: '100vh',
-      background: t.sidebarBg,
-      borderRight: `1px solid ${t.sidebarBorder}`,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      padding: '10px 0 12px',
-      gap: 4,
-      flexShrink: 0,
-      zIndex: 20,
-    }}>
-      <Tooltip label="Open sidebar">
-        <button
-          onClick={() => { if (onLogoClick) onLogoClick(); }}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            padding: '4px 0 10px', lineHeight: 0,
-          }}
-          onMouseEnter={() => setLogoHover(true)}
-          onMouseLeave={() => setLogoHover(false)}
-        >
-          <span style={{ width: 26, height: 26, position: 'relative', display: 'block' }}>
-            <img src={t.logoMark} alt="VoiceLK"
-              style={{
-                position: 'absolute', inset: 0, width: 26, height: 26, objectFit: 'contain',
-                opacity: logoHover ? 0 : 1,
-                transform: logoHover ? 'scale(0.82) translateX(2px)' : 'scale(1) translateX(0)',
-                transition: 'opacity 0.16s ease, transform 0.16s ease',
-              }} />
-            <span style={{
-              position: 'absolute', inset: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              opacity: logoHover ? 1 : 0,
-              transform: logoHover ? 'scale(1) translateX(0)' : 'scale(0.82) translateX(-3px)',
-              transition: 'opacity 0.16s ease, transform 0.16s ease',
-            }}>
-              <PanelLeftOpen size={20} strokeWidth={1.8} color={t.navIconColor} />
-            </span>
-          </span>
-        </button>
-      </Tooltip>
-
-      <Tooltip label="New Chat">
-      <button
-        onClick={() => { if (onNewChat) onNewChat(); else setActiveNav('new_chat'); }}
-        style={{
-          width: 36, height: 36,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: '50%',
-          border: 'none',
-          background: activeNav === 'new_chat' ? '#dbeafe' : t.newChatBg,
-          color: activeNav === 'new_chat' ? '#1d4ed8' : t.newChatText,
-          cursor: 'pointer',
-          transition: 'background 0.16s',
-        }}
-        onMouseEnter={(e) => { if (activeNav !== 'new_chat') e.currentTarget.style.background = t.newChatBgHover; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = activeNav === 'new_chat' ? '#dbeafe' : t.newChatBg; }}
-      >
-        <Plus size={16} strokeWidth={2.5} />
-      </button>
-      </Tooltip>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', padding: '0 6px', marginTop: 2 }}>
-        {NAV_TOP.filter(item => isAuthenticated || item.id !== 'profile').map(({ id, label, Icon }) => (
-          <NavItem key={id} id={id} label={label} Icon={Icon}
-            isActive={activeNav === id} full={false} t={t}
-            onClick={() => setActiveNav(id)} />
-        ))}
-      </div>
-
-      <div style={{ flex: 1 }} />
-
-      <div style={{ width: 28, height: 1, background: t.divider, margin: '4px 0' }} />
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', padding: '0 6px' }}>
-        {NAV_BOTTOM.map(({ id, label, Icon }) => (
-          <NavItem key={id} id={id} label={label} Icon={Icon}
-            isActive={activeNav === id} full={false} t={t}
-            onClick={() => setActiveNav(id)} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ExpandedSidebarContent({ t, activeNav, setActiveNav, onClose, onNavClick, onNewChat, isAuthenticated }) {
-  const handleNav = (id) => {
-    setActiveNav(id);
-    if (onNavClick) onNavClick();
-  };
-
-  return (
-    <div style={{
-      display: 'flex', flexDirection: 'column',
-      height: '100%', padding: '12px 10px',
-    }}>
-      <div style={{
-        display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 14, paddingLeft: 2,
-      }}>
-        <div 
-          onClick={() => handleNav('new_chat')}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-          title="Open Chat"
-        >
-          <img src={t.logoFull} alt="VoiceLK"
-            style={{ height: 24, width: 'auto', display: 'block' }} />
-        </div>
-
-        <Tooltip label="Close sidebar">
-          <button
-            className="vlk-panel-toggle-btn"
-            onClick={onClose}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: t.topbarIcon, lineHeight: 0, padding: 6, borderRadius: 8,
-              transition: 'background 0.15s, color 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = t.closeBtnHoverBg;
-              e.currentTarget.style.color = t.topbarIconHover;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = t.topbarIcon;
-            }}
-          >
-            <PanelLeftClose size={19} strokeWidth={1.8} />
-          </button>
-        </Tooltip>
-      </div>
-
-      <button
-        onClick={() => { if (onNewChat) onNewChat(); else setActiveNav('new_chat'); if (onNavClick) onNavClick(); }}
-        style={{
-          width: '100%',
-          display: 'flex', alignItems: 'center', gap: 7,
-          padding: '7px 14px',
-          borderRadius: 9999,
-          border: 'none',
-          background: activeNav === 'new_chat' ? '#e2e8f0' : t.newChatBg,
-          color: activeNav === 'new_chat' ? '#1d4ed8' : t.newChatText,
-          cursor: 'pointer',
-          fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
-          marginBottom: 6, transition: 'background 0.16s',
-        }}
-        onMouseEnter={(e) => { if (activeNav !== 'new_chat') e.currentTarget.style.background = t.newChatBgHover; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = activeNav === 'new_chat' ? '#e2e8f0' : t.newChatBg; }}
-      >
-        <Plus size={15} strokeWidth={2.5} />
-        New Chat
-      </button>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {NAV_TOP.filter(item => isAuthenticated || item.id !== 'profile').map(({ id, label, Icon }) => (
-          <NavItem key={id} id={id} label={label} Icon={Icon}
-            isActive={activeNav === id} full={true} t={t}
-            onClick={() => handleNav(id)} />
-        ))}
-      </div>
-
-      <div style={{ flex: 1 }} />
-
-      <div style={{ height: 1, background: t.divider, margin: '6px 0' }} />
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {NAV_BOTTOM.map(({ id, label, Icon }) => (
-          <NavItem key={id} id={id} label={label} Icon={Icon}
-            isActive={activeNav === id} full={true} t={t}
-            onClick={() => handleNav(id)} />
-        ))}
-      </div>
-    </div>
-  );
+function Avatar({ src, name }) {
+  const [failed, setFailed] = useState(false);
+  return src && !failed ? (
+    <img className="studio-avatar" src={src} alt="" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+  ) : <span className="studio-avatar">{name.slice(0, 2).toUpperCase()}</span>;
 }
 
 export default function MainLayout({ isAuthenticated = true, userData, onLoginClick, onLogout, isDark, onToggleDark }) {
-  const [expanded, setExpanded] = useState(() => window.innerWidth > 768);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
+  const [expanded, setExpanded] = useState(() => !window.matchMedia('(max-width: 768px)').matches);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const sidebarRef = useRef(null);
+  const mobileMenuRef = useRef(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth <= 768) {
-        setExpanded(false);
-      }
+    const query = window.matchMedia('(max-width: 768px)');
+    const handleResize = event => {
+      setIsMobile(event.matches);
+      setDrawerOpen(false);
+      if (event.matches) setExpanded(false);
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    query.addEventListener('change', handleResize);
+    return () => query.removeEventListener('change', handleResize);
   }, []);
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => {
+    if (!isMobile || !drawerOpen) return;
+    const sidebar = sidebarRef.current;
+    const menu = mobileMenuRef.current;
+    sidebar?.querySelector('button')?.focus();
+    const handleKey = event => {
+      if (event.key === 'Escape') { event.preventDefault(); setDrawerOpen(false); }
+      if (event.key !== 'Tab') return;
+      const buttons = [...sidebar.querySelectorAll('button:not(:disabled)')];
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    sidebar?.addEventListener('keydown', handleKey);
+    return () => { sidebar?.removeEventListener('keydown', handleKey); menu?.focus(); };
+  }, [isMobile, drawerOpen]);
+
   // Restore the last visited tab on refresh instead of always snapping back to home.
   const [activeNav, setActiveNav] = useState(() => {
     try {
@@ -469,6 +182,7 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
     }
   });
   const [chatInitialMessage, setChatInitialMessage] = useState('');
+  const [chatInitialModel, setChatInitialModel] = useState('');
   const [chatInitialHistoryItem, setChatInitialHistoryItem] = useState(null);
 
   // Cached backend responses, kept here (above the tab-driven unmount/remount
@@ -480,6 +194,7 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
 
   useEffect(() => {
     setRecentHistory([]);
+    setHistoryCache(null);
   }, [userData?.userId]);
 
   const handleHistoryPending = useCallback((tempId, text) => {
@@ -557,264 +272,172 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
     }
   }, [isAuthenticated, activeNav]);
 
-  const handleHomeSubmit = (message) => {
+  const handleHomeSubmit = (message, model) => {
     setChatInitialMessage(message);
+    setChatInitialModel(model || '');
     setChatInitialHistoryItem(null);
     setActiveNav('chat');
   };
 
   const handleNewChat = () => {
+    setChatInitialModel('');
     setChatInitialMessage('');
     setChatInitialHistoryItem(null);
     setActiveNav('new_chat');
   };
 
   const handleSelectHistoryItem = (item) => {
+    setChatInitialModel('');
     setChatInitialMessage('');
     setChatInitialHistoryItem(item);
     setActiveNav('chat');
   };
 
-  // Reopening from the collapsed rail should restore the persistent sidebar
-  // (so it stays open across nav clicks) on desktop widths; on narrow/mobile
-  // widths the persistent panel is CSS-hidden, so fall back to the drawer.
-  const handleOpenSidebar = () => {
-    if (window.innerWidth > 768) {
-      setExpanded(true);
-    } else {
-      setDrawerOpen(true);
-    }
-  };
-
   const t = isDark ? DARK : LIGHT;
 
-  return (
+  const accountName = isAuthenticated ? (displayName || userData?.email?.split('@')[0] || 'Your account') : 'Sign in';
+  const sidebarItems = [...NAV_TOP, ...NAV_BOTTOM];
+  const savedChats = [...recentHistory, ...(historyCache?.items || [])]
+    .filter((item, index, items) => !item.pending && items.findIndex(other => other.id === item.id) === index)
+    .slice(0, 3);
+  const navigate = (id) => {
+    if (id === 'profile' && !isAuthenticated) onLoginClick();
+    else setActiveNav(id);
+    setDrawerOpen(false);
+  };
+  const newChat = () => { handleNewChat(); setDrawerOpen(false); };
+
+  const sidebar = (
     <>
-      <style>{`
-        @keyframes slideInLeft {
-          from { transform: translateX(-100%); }
-          to   { transform: translateX(0); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; } to { opacity: 1; }
-        }
-        #voicelk-input::placeholder { color: ${t.inputPlaceholder}; }
-        @media (max-width: 768px) {
-          .desktop-sidebar { display: none !important; }
-        }
-        .vlk-tt-wrap { position: relative; display: inline-flex; }
-        .vlk-tt-bubble {
-          position: absolute;
-          left: calc(100% + 12px);
-          top: 50%;
-          transform: translateY(-50%) translateX(-4px);
-          background: ${isDark ? '#f1f5f9' : '#111827'};
-          color: ${isDark ? '#0f172a' : '#ffffff'};
-          font-size: 12.5px;
-          font-weight: 600;
-          font-family: 'Quicksand', system-ui, sans-serif;
-          padding: 6px 13px;
-          border-radius: 9999px;
-          white-space: nowrap;
-          opacity: 0;
-          visibility: hidden;
-          pointer-events: none;
-          transition: opacity 0.1s ease, transform 0.1s ease;
-          transition-delay: 0s;
-          z-index: 100;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.22);
-        }
-        .vlk-tt-bubble.vlk-tt-show {
-          opacity: 1;
-          visibility: visible;
-          transform: translateY(-50%) translateX(0);
-        }
-        .vlk-tt-bubble[data-pos="bottom-end"] {
-          left: auto;
-          right: 0;
-          top: calc(100% + 8px);
-          transform: translateY(-6px);
-        }
-        .vlk-tt-bubble[data-pos="bottom-end"].vlk-tt-show {
-          transform: translateY(0);
-        }
-        .vlk-panel-toggle-btn svg { transition: transform 0.18s ease; }
-        .vlk-panel-toggle-btn:hover svg { transform: translateX(-2px); }
-      `}</style>
-
-      <div style={{
-        display: 'flex', height: '100vh', width: '100vw',
-        overflow: 'hidden',
-        fontFamily: "'Quicksand', system-ui, sans-serif",
-        background: t.pageBg,
-      }}>
-
-        {expanded && (
-          <div className="desktop-sidebar" style={{
-            width: 220, minWidth: 220,
-            height: '100vh',
-            background: t.sidebarBg,
-            borderRight: `1px solid ${t.sidebarBorder}`,
-            flexShrink: 0, zIndex: 20,
-            animation: 'slideInLeft 0.22s ease',
-          }}>
-            <ExpandedSidebarContent
-              t={t} activeNav={activeNav} setActiveNav={setActiveNav}
-              onClose={() => setExpanded(false)}
-              onNewChat={handleNewChat}
-              isAuthenticated={isAuthenticated}
-            />
-          </div>
+      <Tooltip label="New chat" enabled={!expanded && !drawerOpen} block isDark={isDark}>
+        <button className="studio-new-chat" aria-label="New chat" onClick={newChat}><Sparkles size={16} /><span>New chat</span></button>
+      </Tooltip>
+      <p className="studio-section-label">Explore</p>
+      <nav aria-label="Main navigation" className="studio-nav">
+        <Tooltip label="Voice studio" enabled={!expanded && !drawerOpen} block isDark={isDark}>
+          <button className={`studio-nav-item ${activeNav === 'new_chat' || activeNav === 'chat' ? 'is-active' : ''}`}
+            aria-label="Voice studio" aria-current={activeNav === 'new_chat' || activeNav === 'chat' ? 'page' : undefined} onClick={newChat}>
+            <AudioLines size={18} /><span>Voice studio</span>
+          </button>
+        </Tooltip>
+        {sidebarItems.map(({ id, label, Icon }) => (
+          <Tooltip key={id} label={label} enabled={!expanded && !drawerOpen} block isDark={isDark}>
+            <button className={`studio-nav-item ${activeNav === id ? 'is-active' : ''}`}
+              aria-label={label} aria-current={activeNav === id ? 'page' : undefined} onClick={() => navigate(id)}>
+              <Icon size={18} /><span>{label}</span>
+            </button>
+          </Tooltip>
+        ))}
+      </nav>
+      <div className="studio-sidebar-details" inert={!isMobile && !expanded} aria-hidden={!isMobile && !expanded}>
+      <div className="studio-recents">
+        <p className="studio-section-label">Recent chats</p>
+        {savedChats.length ? savedChats.map(item => (
+          <button className="studio-recent" key={item.id} title={item.content}
+            onClick={() => { handleSelectHistoryItem(item); setDrawerOpen(false); }}>
+            <MessageSquare size={16} /><span>{item.content}</span>
+          </button>
+        )) : <p className="studio-empty-history">Your conversations will appear here. Start with a little curiosity.</p>}
+      </div>
+      <div className="studio-account-card">
+        {isAuthenticated && (
+          <button className="studio-account-summary" onClick={() => navigate('profile')}>
+            <Avatar key={displayAvatar} src={displayAvatar} name={accountName} />
+            <span><strong>{accountName}</strong><small>Your personal workspace</small></span>
+          </button>
         )}
+        <button className="studio-account-action" onClick={isAuthenticated ? onLogout : onLoginClick}>
+          {isAuthenticated ? <LogOut size={15} /> : <LogIn size={15} />}
+          <span>{isAuthenticated ? 'Sign out' : 'Sign in'}</span>
+        </button>
+      </div>
+      </div>
+    </>
+  );
 
-        {!expanded && (
-          <CollapsedSidebar
-            t={t} activeNav={activeNav} setActiveNav={setActiveNav}
-            onLogoClick={handleOpenSidebar}
-            onNewChat={handleNewChat}
-            isAuthenticated={isAuthenticated}
-          />
-        )}
-
-        <div style={{
-          flex: 1, display: 'flex', flexDirection: 'column',
-          height: '100vh', overflow: 'hidden',
-          background: t.pageBg, position: 'relative',
-        }}>
-          <div style={{
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '8px 16px',
-            flexShrink: 0,
-          }}>
-            <div />
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              {isAuthenticated ? (
-                <>
-                  <div
-                    title={userData?.email || 'User'}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setActiveNav('profile')}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveNav('profile'); } }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      background: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
-                      padding: '4px 12px 4px 4px',
-                      borderRadius: 9999,
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
-                      cursor: 'pointer', userSelect: 'none',
-                      transition: 'background 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9'}
-                  >
-                    <AvatarCircle
-                      key={displayAvatar || 'none'}
-                      src={displayAvatar}
-                      label={((displayName || userData?.email)?.[0] || 'U').toUpperCase()}
-                      size={28}
-                      gradient={t.avatarBg}
-                      textColor={t.avatarText}
-                      fontSize={12}
-                    />
-                    <span style={{ fontSize: 13.5, fontWeight: 600, color: t.itemText }}>
-                      {displayName ? displayName.split(' ')[0] : (userData?.email ? userData.email.split('@')[0].split(/[._+-]/)[0].replace(/^\w/, c => c.toUpperCase()) : 'User')}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <button
-                  onClick={onLoginClick}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 7,
-                    padding: '7px 18px 7px 14px',
-                    borderRadius: 9999,
-                    border: 'none',
-                    background: isDark
-                      ? 'linear-gradient(135deg, #0891b2, #00d4ff)'
-                      : 'linear-gradient(135deg, #2563eb, #3b82f6)',
-                    color: '#ffffff',
-                    fontSize: 13.5, fontWeight: 600,
-                    fontFamily: 'inherit',
-                    cursor: 'pointer',
-                    transition: 'transform 0.15s, box-shadow 0.15s, opacity 0.15s',
-                    boxShadow: isDark
-                      ? '0 2px 12px rgba(0,212,255,0.3)'
-                      : '0 2px 12px rgba(37,99,235,0.3)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.04)';
-                    e.currentTarget.style.boxShadow = isDark
-                      ? '0 4px 20px rgba(0,212,255,0.45)'
-                      : '0 4px 20px rgba(37,99,235,0.45)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = isDark
-                      ? '0 2px 12px rgba(0,212,255,0.3)'
-                      : '0 2px 12px rgba(37,99,235,0.3)';
-                  }}
-                >
-                  <LogIn size={15} strokeWidth={2.2} />
-                  Login
+  return (
+    <div className={`voice-studio ${isDark ? 'studio-dark' : ''}`}>
+      <header className="studio-header">
+        <div className={`studio-header-sidebar${!isMobile && !expanded ? ' is-collapsed' : ''}`}>
+        <button className="studio-brand" onClick={newChat} aria-label="VoiceLK home"
+          inert={!isMobile && !expanded} aria-hidden={!isMobile && !expanded}>
+          <img src={isDark ? voiceLKLogoWhite : voiceLKLogo} alt="VoiceLK" />
+        </button>
+        <Tooltip label={expanded ? 'Collapse sidebar' : 'Expand sidebar'} pos="bottom-end" isDark={isDark} className="studio-desktop-toggle">
+          <button className="studio-header-icon studio-header-sidebar-toggle"
+            aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'} aria-expanded={expanded}
+            aria-controls="studio-sidebar" onClick={() => setExpanded(open => !open)}>
+            {expanded ? <PanelLeftClose size={20} /> : (
+              <>
+                <img className="studio-collapsed-mark" src={isDark ? voiceLKMarkWhite : voiceLKMark} alt="" aria-hidden="true" />
+                <PanelLeftOpen className="studio-expand-icon" size={20} aria-hidden="true" />
+              </>
+            )}
+          </button>
+        </Tooltip>
+        <Tooltip label={drawerOpen ? 'Close navigation' : 'Open navigation'} pos="bottom-end" isDark={isDark} className="studio-mobile-menu">
+          <button ref={mobileMenuRef} className="studio-header-icon" aria-label={drawerOpen ? 'Close navigation' : 'Open navigation'}
+            aria-expanded={drawerOpen} aria-controls="studio-sidebar" onClick={() => setDrawerOpen(open => !open)}>
+            {drawerOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </Tooltip>
+        </div>
+        <div className="studio-header-actions">
+          <Tooltip label={isDark ? 'Switch to light mode' : 'Switch to dark mode'} pos="bottom-end" isDark={isDark}>
+            <button type="button" className="studio-header-icon" aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'} onClick={onToggleDark}>
+              {isDark ? <Sun size={19} /> : <Moon size={19} />}
+            </button>
+          </Tooltip>
+          <Tooltip label={isAuthenticated ? 'Your profile' : 'Sign in'} pos="bottom-end" isDark={isDark}>
+          <button className="studio-header-account" onClick={() => navigate('profile')}>
+            <span>{accountName}</span>
+            {isAuthenticated ? (
+              <Avatar key={displayAvatar} src={displayAvatar} name={accountName} />
+            ) : (
+              <span className="studio-avatar" aria-hidden="true"><LogIn size={15} /></span>
+            )}
+          </button>
+          </Tooltip>
+        </div>
+      </header>
+      <div className="studio-body">
+        <aside ref={sidebarRef} id="studio-sidebar" aria-label="Sidebar" inert={isMobile && !drawerOpen}
+          aria-hidden={isMobile && !drawerOpen}
+          className={`studio-sidebar ${!isMobile && !expanded ? 'is-collapsed' : ''} ${drawerOpen ? 'is-open' : ''}`}>
+          {isMobile && (
+            <div className="studio-sidebar-top">
+              <span className="studio-sidebar-caption">Workspace</span>
+              <Tooltip label="Close navigation" isDark={isDark}>
+                <button className="studio-collapse-toggle" aria-label="Close navigation"
+                  aria-expanded={drawerOpen} aria-controls="studio-sidebar" onClick={() => setDrawerOpen(false)}>
+                  <X size={19} />
                 </button>
-              )}
+              </Tooltip>
             </div>
-          </div>
-
+          )}
+          {sidebar}
+        </aside>
+        <button className={`studio-backdrop${drawerOpen ? ' is-visible' : ''}`} aria-label="Close navigation"
+          aria-hidden={!isMobile || !drawerOpen} tabIndex={-1} onClick={() => setDrawerOpen(false)} />
+        <main className="studio-main" inert={isMobile && drawerOpen} aria-label={PAGE_TITLES[activeNav] || 'Voice studio'}>
           {activeNav === 'profile' ? (
             <ProfileView isDark={isDark} onToggleDark={onToggleDark} onLogout={onLogout} userData={userData} />
           ) : activeNav === 'history' ? (
             <HistoryView isDark={isDark} userData={userData} onSelectHistoryItem={handleSelectHistoryItem}
-              cache={historyCache} onCacheUpdate={setHistoryCache}
-              recentItems={recentHistory}
+              cache={historyCache} onCacheUpdate={setHistoryCache} recentItems={recentHistory}
               onRecentRemove={(id) => setRecentHistory(prev => prev.filter(i => i.id !== id))} />
           ) : activeNav === 'settings' ? (
             <SettingsView isDark={isDark} onToggleDark={onToggleDark} userData={userData} t={t} />
           ) : activeNav === 'help' ? (
             <HelpView isDark={isDark} />
           ) : activeNav === 'chat' ? (
-            <ChatView t={t} isDark={isDark} initialMessage={chatInitialMessage} initialHistoryItem={chatInitialHistoryItem} userData={userData}
+            <ChatView key={chatInitialHistoryItem?.id || 'new-chat'} t={t} isDark={isDark} initialMessage={chatInitialMessage} initialModel={chatInitialModel} onLoginClick={onLoginClick} initialHistoryItem={chatInitialHistoryItem} userData={userData}
               onHistoryPending={handleHistoryPending} onHistoryResolved={handleHistoryResolved} />
           ) : (
-            <HomeView t={t} isDark={isDark} onSubmit={handleHomeSubmit} />
+            <HomeView displayName={displayName} onSubmit={handleHomeSubmit} userData={userData} isDark={isDark} onLoginClick={onLoginClick} />
           )}
-        </div>
-
-        {drawerOpen && (
-          <>
-            <div
-              onClick={() => setDrawerOpen(false)}
-              style={{
-                position: 'fixed', inset: 0,
-                background: t.backdropBg,
-                zIndex: 40,
-                animation: 'fadeIn 0.18s ease',
-              }}
-            />
-            <div style={{
-              position: 'fixed',
-              top: 0, left: 0, bottom: 0,
-              width: 230,
-              background: t.sidebarBg,
-              borderRight: `1px solid ${t.sidebarBorder}`,
-              boxShadow: t.drawerShadow,
-              zIndex: 50,
-              animation: 'slideInLeft 0.22s cubic-bezier(0.22,0.61,0.36,1)',
-            }}>
-              <ExpandedSidebarContent
-                t={t} activeNav={activeNav} setActiveNav={setActiveNav}
-                onClose={() => { setDrawerOpen(false); }}
-                onNavClick={() => { setDrawerOpen(false); }}
-                onNewChat={handleNewChat}
-                isAuthenticated={isAuthenticated}
-              />
-            </div>
-          </>
-        )}
+        </main>
       </div>
-    </>
+    </div>
   );
 }
