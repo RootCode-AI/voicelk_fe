@@ -138,7 +138,8 @@ canonical URLs.
 
 The build includes:
 
-- `/sitemap.xml`: the single public app URL. Chat, History, Profile and Settings
+- `/sitemap.xml`: the single public app URL, sourced from the project-root
+  `sitemap.xml`. The build substitutes `VITE_SITE_URL` when configured. Chat, History, Profile and Settings
   are internal views, not separate URLs or public conversations to index.
 - `/robots.txt`: allows crawling and advertises the app sitemap.
 - `/llms.txt`: a public product summary and useful links, sourced from
