@@ -1,5 +1,5 @@
 import { getHttpErrorMessage } from '../context/ErrorContext';
-import { getToken, isTokenExpired, expireSession } from './session';
+import { getToken, isTokenExpired, expireSession, getSessionRevision, isCurrentSession } from './session';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -19,17 +19,21 @@ export async function apiFetch(endpoint, options = {}) {
     token = null;
   }
   if (token) headers['Authorization'] = `Bearer ${token}`;
+  const revision = getSessionRevision();
 
   let response;
   try {
     response = await fetch(url, { ...options, headers });
   } catch (networkError) {
+    if (networkError.name === 'AbortError') throw networkError;
     throw new ApiError(
       0,
       'Unable to reach the server. Please check your internet connection.',
       networkError
     );
   }
+
+  if (!isCurrentSession(token, revision)) throw new DOMException('Session changed', 'AbortError');
 
   if (!response.ok) {
     // The server refused a token the client still held: the session is over
@@ -55,7 +59,9 @@ export async function apiFetch(endpoint, options = {}) {
   }
 
   if (response.status === 204) return {};
-  return response.json();
+  const data = await response.json();
+  if (!isCurrentSession(token, revision)) throw new DOMException('Session changed', 'AbortError');
+  return data;
 }
 
 export const api = {

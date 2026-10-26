@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import ConfirmDialog from '../components/common/ConfirmDialog/ConfirmDialog';
 
 const ConfirmContext = createContext(null);
@@ -6,6 +6,7 @@ const ConfirmContext = createContext(null);
 export function ConfirmProvider({ children, isDark = false }) {
   const [request, setRequest] = useState(null);
   const resolver = useRef(null);
+  useEffect(() => () => { resolver.current?.(false); resolver.current = null; }, []);
 
   const confirm = useCallback((message, options = {}) => {
     return new Promise((resolve) => {

@@ -4,6 +4,14 @@
 
 export const TOKEN_KEY = 'voicelk_token';
 export const USER_KEY = 'voicelk_user';
+export const ACTIVE_NAV_KEY = 'vlk_active_nav';
+let sessionRevision = 0;
+export const getSessionRevision = () => sessionRevision;
+export const isCurrentSession = (token, revision) => revision === sessionRevision && token === getToken();
+
+export function resetWorkspaceNavigation() {
+  try { sessionStorage.removeItem(ACTIVE_NAV_KEY); } catch { /* storage unavailable */ }
+}
 
 // Fired on window when the session ends without the user logging out.
 export const SESSION_EXPIRED_EVENT = 'voicelk:session-expired';
@@ -31,6 +39,8 @@ export function getToken() {
 }
 
 export function clearSession() {
+  sessionRevision += 1;
+  resetWorkspaceNavigation();
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
 }

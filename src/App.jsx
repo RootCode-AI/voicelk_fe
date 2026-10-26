@@ -11,7 +11,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './services/firebase';
 import {
   TOKEN_KEY, USER_KEY, SESSION_EXPIRED_EVENT,
-  clearSession, expireSession, getToken, isTokenExpired, tokenExpiry,
+  clearSession, expireSession, getToken, isTokenExpired, tokenExpiry, resetWorkspaceNavigation,
 } from './services/session';
 
 // setTimeout fires immediately for delays above 2^31-1 ms, so long waits are capped
@@ -110,12 +110,15 @@ function AppInner() {
   }, []);
 
   const handleLogin = (data) => {
+    resetWorkspaceNavigation();
     setUserData(data);
     setIsAuthenticated(true);
     setShowLogin(false);
   };
 
   const signOutLocally = () => {
+    resetWorkspaceNavigation();
+    setShowLogin(false);
     setUserData(null);
     setIsAuthenticated(false);
     // Google sign-ins also leave a Firebase session in the browser; end it too so
@@ -153,7 +156,7 @@ function AppInner() {
   // Keep every open tab in step: signing in or out in one tab applies to all.
   useEffect(() => {
     const onStorage = (event) => {
-      if (event.key !== TOKEN_KEY && event.key !== null) return;
+      if (event.key !== TOKEN_KEY && event.key !== USER_KEY && event.key !== null) return;
       const session = loadStoredSession();
       setIsAuthenticated(session.isAuthenticated);
       setUserData(session.userData);
@@ -162,8 +165,11 @@ function AppInner() {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
+  // A session change discards all chat, profile, history and dialog state together.
+  const workspaceKey = isAuthenticated ? `account:${userData?.userId || userData?.email || ''}` : 'signed-out';
+
   return (
-    <ConfirmProvider isDark={isDark}>
+    <ConfirmProvider key={workspaceKey} isDark={isDark}>
       <ErrorBoundary>
         <MainLayout
           isAuthenticated={isAuthenticated}

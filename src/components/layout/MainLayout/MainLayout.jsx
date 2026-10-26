@@ -177,7 +177,7 @@ export default function MainLayout({ isAuthenticated = true, userData, onLoginCl
   // Restore the last visited tab on refresh instead of always snapping back to home.
   const [activeNav, setActiveNav] = useState(() => {
     try {
-      return sessionStorage.getItem('vlk_active_nav') || 'new_chat';
+      return isAuthenticated ? sessionStorage.getItem('vlk_active_nav') || 'new_chat' : 'new_chat';
     } catch (_) {
       return 'new_chat';
     }

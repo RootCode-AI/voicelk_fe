@@ -194,20 +194,23 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId, autoPlay = false 
   // Fetch the audio as a Blob with Authorization header
   useEffect(() => {
     let objectUrl = null;
+    const controller = new AbortController();
     const fetchAudio = async () => {
       try {
         const token = getToken();
         const headers = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const response = await fetch(streamUrl, { headers });
-        if (response.status === 401 && token) expireSession();
+        const response = await fetch(streamUrl, { headers, signal: controller.signal });
+        if (response.status === 401 && token && token === getToken() && !controller.signal.aborted) expireSession();
         if (!response.ok) throw new Error('Failed to fetch audio');
         
         const blob = await response.blob();
+        if (controller.signal.aborted) return;
         objectUrl = URL.createObjectURL(blob);
         setBlobUrl(objectUrl);
       } catch (err) {
+        if (controller.signal.aborted) return;
         console.error('Audio fetch error:', err);
         setIsLoading(false); // Stop loading on error
       }
@@ -216,6 +219,7 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId, autoPlay = false 
     fetchAudio();
 
     return () => {
+      controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [streamUrl]);
@@ -254,6 +258,7 @@ function AudioPlayer({ audioId, audioDuration, isDark, userId, autoPlay = false 
     audio.addEventListener('error', onError);
 
     return () => {
+      audio.pause();
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
       audio.removeEventListener('timeupdate', onTimeUpdate);
       audio.removeEventListener('ended', onEnded);
@@ -470,9 +475,12 @@ export default function ChatView({ isDark, initialMessage = '', initialModel = '
 
   // Active typewriter intervals, keyed by message id, so they can be cleared on unmount.
   const typingTimersRef = useRef({});
+  const activeRef = useRef(true);
 
   useEffect(() => {
+    activeRef.current = true;
     return () => {
+      activeRef.current = false;
       Object.values(typingTimersRef.current).forEach(clearInterval);
     };
   }, []);
@@ -507,7 +515,7 @@ export default function ChatView({ isDark, initialMessage = '', initialModel = '
 
   // Fetch audio metadata for an answer and update the message (with polling)
   const fetchAudioForMessage = useCallback((msgId, answerId, attempt = 1) => {
-    if (!answerId) return;
+    if (!answerId || !activeRef.current) return;
     
     // Stop polling after 15 attempts (45 seconds)
     if (attempt > 15) {
@@ -519,6 +527,7 @@ export default function ChatView({ isDark, initialMessage = '', initialModel = '
 
     api.get(`/api/audios/answer/${answerId}`)
       .then(audio => {
+        if (!activeRef.current) return;
         if (audio && audio.audioId) {
           setMessages(prev => prev.map(msg =>
             msg.id === msgId
@@ -528,6 +537,7 @@ export default function ChatView({ isDark, initialMessage = '', initialModel = '
         }
       })
       .catch(err => {
+        if (!activeRef.current || err.name === 'AbortError') return;
         if (err?.status === 404) {
           // Audio not ready yet, poll again in 3 seconds
           setTimeout(() => fetchAudioForMessage(msgId, answerId, attempt + 1), 3000);
@@ -576,6 +586,7 @@ export default function ChatView({ isDark, initialMessage = '', initialModel = '
       // A question sent straight from Home can arrive before the voice list has
       // loaded, so the list is awaited here rather than read from state.
       const availableModels = isGuest ? [] : await loadVoices().catch(() => []);
+      if (!activeRef.current) return;
       const voice = isGuest ? '' : selectedModelKey(availableModels, requestedModel, false, preferredVoice(availableModels));
       const payload = {
         inputText: text,
@@ -583,9 +594,8 @@ export default function ChatView({ isDark, initialMessage = '', initialModel = '
         userId: userData?.userId || '',
         ...(voice ? { voiceModel: voice } : {}),
       };
-      console.log('[ChatView] Sending to /api/ask:', payload);
       const data = await api.post('/api/ask', payload);
-      console.log('[ChatView] Response:', data);
+      if (!activeRef.current) return;
 
       if (tracksHistory) onHistoryResolved?.(historyTempId, data);
 
@@ -618,6 +628,7 @@ export default function ChatView({ isDark, initialMessage = '', initialModel = '
         fetchAudioForMessage(thinkingId, data.answerId);
       }
     } catch (err) {
+      if (!activeRef.current || err.name === 'AbortError') return;
       console.error('[ChatView] Error:', err);
       if (tracksHistory) onHistoryResolved?.(historyTempId, null);
       showError(friendlyMessage(err), 'error');

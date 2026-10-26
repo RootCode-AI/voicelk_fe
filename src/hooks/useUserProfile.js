@@ -1,57 +1,36 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api, friendlyMessage } from '../services/api';
 
-// Shared across every component instance for the app's lifetime, so
-// switching tabs or remounting the Profile page never re-fetches a user
-// whose details are already known.
-const profileCache = new Map();
-
-function mapProfile(data) {
-  return {
-    fullName: data.userName || data.email?.split('@')[0] || '',
-    email: data.email || '',
-    avatar: data.profilePicture || '',
-  };
-}
-
+// Profile data belongs to the mounted account workspace, never a module-level cache.
 export function useUserProfile(userId, showError) {
-  const [profile, setProfile] = useState(() => profileCache.get(userId) || null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const activeUser = useRef(null);
 
   useEffect(() => {
-    if (!userId) {
-      setProfile(null);
-      return;
-    }
-
-    const cached = profileCache.get(userId);
-    if (cached) {
-      setProfile(cached);
-      return;
-    }
-
+    let active = true;
+    activeUser.current = userId;
+    setProfile(null);
+    if (!userId) { setLoading(false); return; }
+    const controller = new AbortController();
     setLoading(true);
-    api.get(`/api/reg/${userId}`)
+    api.get(`/api/reg/${userId}`, { signal: controller.signal })
       .then(data => {
-        if (!data) return;
-        const mapped = mapProfile(data);
-        profileCache.set(userId, mapped);
-        setProfile(mapped);
+        if (!active || !data) return;
+        setProfile({ fullName: data.userName || data.email?.split('@')[0] || '',
+          email: data.email || '', avatar: data.profilePicture || '' });
       })
       .catch(err => {
-        console.error('[useUserProfile] Failed to fetch user profile:', err);
+        if (!active || err.name === 'AbortError') return;
         showError?.(friendlyMessage(err), 'error');
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; activeUser.current = null; controller.abort(); };
   }, [userId]);
 
-  // Patch the cached profile in place, e.g. after an avatar upload, so the
-  // change is reflected everywhere without a refetch.
-  const updateProfile = useCallback((patch) => {
-    if (!userId) return;
-    const next = { ...(profileCache.get(userId) || {}), ...patch };
-    profileCache.set(userId, next);
-    setProfile(next);
+  const updateProfile = useCallback(patch => {
+    if (!userId || activeUser.current !== userId) return;
+    setProfile(prev => ({ ...prev, ...patch }));
   }, [userId]);
 
   return { profile, loading, updateProfile };
