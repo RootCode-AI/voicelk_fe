@@ -41,26 +41,31 @@ export default function HistoryView({ isDark, userData, onSelectHistoryItem, cac
   const confirm = useConfirm();
 
   useEffect(() => {
-    if (!userData?.userId) return;
+    if (!userData?.userId) { setHistoryItems([]); setLoading(false); return; }
 
     if (cache?.userId === userData.userId) {
       setHistoryItems(cache.items);
       return;
     }
 
+    let active = true;
+    const controller = new AbortController();
     setLoading(true);
 
-    api.get(`/api/ask/history/${userData.userId}`)
+    api.get(`/api/ask/history/${userData.userId}`, { signal: controller.signal })
       .then(data => {
+        if (!active) return;
         const mapped = Array.isArray(data) ? data.map(mapHistoryItem) : [];
         setHistoryItems(mapped);
         onCacheUpdate?.({ userId: userData.userId, items: mapped });
       })
       .catch(err => {
+        if (!active || err.name === 'AbortError') return;
         console.error('[HistoryView] Failed to load history:', err);
         showError(friendlyMessage(err), 'error');
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; controller.abort(); };
   }, [userData?.userId, cache]);
 
   // Questions sent from Chat this session (including ones still in flight) go on
