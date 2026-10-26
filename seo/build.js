@@ -16,11 +16,8 @@ export function seoFiles(value = DEFAULT_SITE_URL) {
     'robots.txt': `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`,
     // This app has one public URL. Account views and chats are internal state.
     // Omit lastmod rather than treating every deployment as a content change.
-    'sitemap.xml': `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>${siteUrl}/</loc></url>
-</urlset>
-`,
+    'sitemap.xml': readFileSync(new URL('../sitemap.xml', import.meta.url), 'utf8')
+      .replaceAll(DEFAULT_SITE_URL, siteUrl),
     'llms.txt': readFileSync(new URL('./llms.txt', import.meta.url), 'utf8')
       .replaceAll('__SITE_URL__', siteUrl),
   };
