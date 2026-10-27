@@ -7,7 +7,8 @@ import { useCookieConsent } from '../../context/CookieConsentContext';
 import { useConfirm } from '../../context/ConfirmContext';
 import { getCookie, setCookie } from '../../utils/cookies';
 import { getPlaybackSpeed, savePlaybackSpeed } from '../../utils/playback';
-import { useVoices, preferredVoice, voiceLabel, VOICE_COOKIE } from '../../hooks/useVoices';
+import { useVoices, preferredVoice, retiredSavedVoice, voiceLabel, VOICE_COOKIE } from '../../hooks/useVoices';
+import { isAvailable } from '../../utils/modelSelection';
 
 export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const { showError } = useError();
@@ -15,6 +16,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
   const confirm = useConfirm();
   const { voices, loading: voicesLoading } = useVoices();
   const [voiceModel, setVoiceModel] = useState('');
+  const [retiredVoice, setRetiredVoice] = useState(null);
   const [playbackSpeed, setPlaybackSpeed] = useState(getPlaybackSpeed);
   const [autoPlay, setAutoPlay] = useState(getCookie('vlk_autoplay') !== 'false');
   const [clearing, setClearing] = useState(false);
@@ -34,11 +36,15 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
 
   // The list arrives after the first render; pick the saved voice once it is known.
   useEffect(() => {
-    if (voices.length) setVoiceModel(preferredVoice(voices));
+    if (voices.length) {
+      setVoiceModel(preferredVoice(voices));
+      setRetiredVoice(retiredSavedVoice(voices));
+    }
   }, [voices]);
 
   const handleVoiceChange = (key) => {
     setVoiceModel(key);
+    setRetiredVoice(null);
     if (hasConsent) {
       setCookie(VOICE_COOKIE, key);
     }
@@ -162,7 +168,9 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
         {!isGuest && (
         <SettingRow
           label="Voice"
-          description={voices.find(v => v.key === voiceModel)?.description
+          description={retiredVoice
+            ? `${retiredVoice.name || retiredVoice.key} is no longer supported, so answers now use ${voices.find(v => v.key === voiceModel)?.name || 'the default voice'}.`
+            : voices.find(v => v.key === voiceModel)?.description
             || 'The voice used to read answers aloud.'}
           control={
             <select aria-label="Voice"
@@ -179,7 +187,7 @@ export default function SettingsView({ isDark, onToggleDark, userData, t }) {
                 <option value="">{voicesLoading ? 'Loading...' : 'Unavailable'}</option>
               )}
               {voices.map(v => (
-                <option key={v.key} value={v.key}>{voiceLabel(v)}</option>
+                <option key={v.key} value={v.key} disabled={!isAvailable(v)}>{voiceLabel(v)}</option>
               ))}
             </select>
           }

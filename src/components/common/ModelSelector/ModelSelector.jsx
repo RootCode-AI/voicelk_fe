@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Cpu, ChevronDown, Check, LockKeyhole, Loader2, LogIn, RefreshCw } from 'lucide-react';
-import { canSelectModel } from '../../../utils/modelSelection';
+import { Ban, Clock, Cpu, ChevronDown, Check, LockKeyhole, Loader2, LogIn, RefreshCw } from 'lucide-react';
+import { canSelectModel, isAvailable, VOICE_STATUS } from '../../../utils/modelSelection';
 import './ModelSelector.css';
 
 export default function ModelSelector({ selection, isDark, disabled = false, onSignIn }) {
@@ -85,13 +85,21 @@ export default function ModelSelector({ selection, isDark, disabled = false, onS
             : voices.map(voice => {
               const locked = !canSelectModel(voice, isGuest);
               const active = voice.key === model;
+              const available = isAvailable(voice);
+              const upcoming = voice.status === VOICE_STATUS.COMING_SOON;
+              const retired = voice.status === VOICE_STATUS.RETIRED;
+              const Icon = retired ? Ban : upcoming ? Clock : locked ? LockKeyhole : Cpu;
               return <button key={voice.key} type="button" role="menuitemradio" aria-checked={active} aria-disabled={locked}
-                className={`model-menu-option${active ? ' is-selected' : ''}`} tabIndex={-1}
+                className={`model-menu-option${active ? ' is-selected' : ''}${retired ? ' is-retired' : ''}`} tabIndex={-1}
                 onClick={() => { if (!locked) { selectModel(voice.key); close(); } }}>
-                <span className="model-option-icon">{locked ? <LockKeyhole size={17} /> : <Cpu size={17} />}</span>
-                <span className="model-option-copy"><strong>{voice.name || voice.key}{voice.defaultVoice && <small>Default</small>}</strong>
+                <span className="model-option-icon"><Icon size={17} /></span>
+                <span className="model-option-copy"><strong>{voice.name || voice.key}
+                  {available && voice.tag && <small className="model-tag">{voice.tag}</small>}
+                  {voice.defaultVoice && <small>Default</small>}
+                  {upcoming && <small>Coming soon</small>}
+                  {retired && <small>No longer supported</small>}</strong>
                   {voice.description && <span>{voice.description}</span>}
-                  {locked && <em>Sign in required</em>}
+                  {locked && available && <em>Sign in required</em>}
                 </span>
                 {active && <Check size={16} className="model-selected-check" aria-label="Selected" />}
               </button>;

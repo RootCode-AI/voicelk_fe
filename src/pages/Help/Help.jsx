@@ -97,6 +97,11 @@ const FAQS = [
   },
   {
     category: CATEGORIES.AUDIO,
+    question: 'Which voices can I choose, and what happened to Speaker 01?',
+    answer: "Signed-in users can pick a voice from the Model menu or in Settings > Audio & Playback. Speaker 02 V2.0 is the newest voice, with longer training for clearer speech; Speaker 02 V1.0 and Speaker 03 remain available, and Speaker 02 V2.1 is coming soon. Speaker 01 is no longer supported — if you had chosen it, VoiceLK now uses the default voice until you pick another one.",
+  },
+  {
+    category: CATEGORIES.AUDIO,
     question: 'Can I change the audio playback speed?',
     answer: "Yes. Go to Settings > Audio & Playback and choose a speed from 0.75x to 1.5x. If you've accepted cookies, this speed is remembered automatically for your next visit.",
   },
