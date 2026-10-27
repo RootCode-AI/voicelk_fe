@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { getCookie } from '../utils/cookies';
+import { isAvailable, VOICE_STATUS } from '../utils/modelSelection';
 
 // Cookie holding the voice the user picked in Settings.
 export const VOICE_COOKIE = 'vlk_voice_model';
@@ -24,9 +25,10 @@ export function loadVoices() {
     voicesRequest = Promise.all([api.get('/api/tts/voices'), loadServedModels()])
       .then(([data, served]) => {
         const offered = Array.isArray(data) ? data : [];
-        // A voice the backend lists but the bridge does not serve would only fail,
-        // so it is left out of the picker.
-        voicesCache = served ? offered.filter(v => served.has(v.key)) : offered;
+        // A voice the backend offers but the bridge does not serve would only fail,
+        // so it is left out of the picker. Coming-soon and retired voices are never
+        // served; they stay in the list so users are told about them.
+        voicesCache = served ? offered.filter(v => !isAvailable(v) || served.has(v.key)) : offered;
         return voicesCache;
       })
       .finally(() => { voicesRequest = null; });
@@ -38,13 +40,23 @@ export function loadVoices() {
 // An empty string sends no voice at all, which leaves the choice to the backend.
 export function preferredVoice(voices) {
   const saved = getCookie(VOICE_COOKIE);
-  if (saved && voices.some(v => v.key === saved)) return saved;
-  return voices.find(v => v.defaultVoice)?.key || '';
+  if (saved && voices.some(v => v.key === saved && isAvailable(v))) return saved;
+  return voices.find(v => v.defaultVoice && isAvailable(v))?.key || '';
 }
 
-// What the voice pickers show for a voice, marking the backend's default one.
+// The retired voice the user had saved, so the UI can say why it was switched.
+export function retiredSavedVoice(voices) {
+  const saved = getCookie(VOICE_COOKIE);
+  return saved ? voices.find(v => v.key === saved && v.status === VOICE_STATUS.RETIRED) || null : null;
+}
+
+// What the voice pickers show for a voice: its tag, its status, and the default mark.
 export function voiceLabel(voice) {
-  return voice.defaultVoice ? `${voice.name} (default)` : voice.name;
+  const name = voice.name || voice.key;
+  if (voice.status === VOICE_STATUS.COMING_SOON) return `${name} (coming soon)`;
+  if (voice.status === VOICE_STATUS.RETIRED) return `${name} (no longer supported)`;
+  const tagged = voice.tag ? `${name} · ${voice.tag}` : name;
+  return voice.defaultVoice ? `${tagged} (default)` : tagged;
 }
 
 export function useVoices() {
